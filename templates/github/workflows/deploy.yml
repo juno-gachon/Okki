@@ -14,8 +14,8 @@ jobs:
     timeout-minutes: 20
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
     env:
-      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_CLI_VERSION: 65.11.0
       VERCEL_TELEMETRY_DISABLED: '1'
     steps:
