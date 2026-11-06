@@ -83,7 +83,7 @@ PR에서는 CI 검사를 실행하고, 배포는 아래 브랜치의 push에서 
 
 최초 설정:
 
-1. Vercel 대상 프로젝트를 준비하고 Root Directory는 저장소 루트, Framework는 `Next.js`로 설정하고 기존 Output Directory `src` override는 해제합니다. 빌드 명령은 `vercel.json`의 `npm run build`를 사용합니다.
+1. Vercel 대상 프로젝트를 준비하고 Root Directory는 저장소 루트, Framework는 `Next.js`로 설정합니다. `vercel.json`은 `outputDirectory: ".next"`를 명시하여 이전 정적 사이트의 `src` 출력 설정을 덮어씁니다. 빌드 명령은 `npm run build`를 사용합니다.
 2. GitHub Settings → Environments에 `preview`, `production`을 만들고, 각각 아래 값을 등록합니다. 환경별 프로젝트·비밀값을 구분합니다.
 3. `preview` Environment의 배포 허용 브랜치에 `develop`과 `preview`를 지정하고, `production`은 `main`으로 제한합니다. `main`에는 CI 필수 검사와 브랜치 보호를 적용하고, `production`에는 배포 검토자를 설정합니다.
 4. `develop` push 후 Actions 결과와 배포 페이지·스크립트·스타일 로딩을 확인하고, 검토한 변경을 `main`에 반영합니다.
@@ -95,4 +95,4 @@ PR에서는 CI 검사를 실행하고, 배포는 아래 브랜치의 push에서 
 
 Vercel Git 자동 배포는 `vercel.json`에서 비활성화하여 Actions와의 중복 배포를 방지합니다. 실행 요약에는 커밋 SHA와 배포 URL이 기록됩니다. 실제 인증·DB·문자 연동은 별도로 구축·검증해야 합니다.
 
-Auth를 Preview에서 사용하려면 Vercel의 **develop 브랜치 Preview 환경**에 위 네 변수를 설정해야 합니다. `APP_BASE_URL`은 develop 고정 Preview 주소를 사용합니다. 다른 임시 배포 URL에서 POST하면 Origin 검증으로 거부되므로 고정 주소로 접속합니다. Vercel 프로젝트의 기존 Output Directory override가 `src`라면 반드시 해제하세요. production에 개발 DB 값을 복사하지 마세요. 코드도 `VERCEL_ENV=production`에서 위 개발 DB 연결을 차단합니다. 이번 작업에서는 Vercel 환경값·프로젝트 설정을 원격 변경하거나 배포하지 않았습니다.
+Auth를 Preview에서 사용하려면 Vercel의 **develop 브랜치 Preview 환경**에 위 네 변수를 설정해야 합니다. `APP_BASE_URL`은 develop 고정 Preview 주소를 사용합니다. 다른 임시 배포 URL에서 POST하면 Origin 검증으로 거부되므로 고정 주소로 접속합니다. `NEXT_NO_ROUTES_MANIFEST` 오류가 `src/routes-manifest.json`을 가리키면 이전 출력 설정이 적용된 것입니다. `outputDirectory: ".next"` 수정이 포함된 새 커밋으로 Actions를 실행해야 합니다. 대시보드의 Output Directory override도 해제하면 설정 혼동을 줄일 수 있습니다. production에 개발 DB 값을 복사하지 마세요. 코드도 `VERCEL_ENV=production`에서 위 개발 DB 연결을 차단합니다. 이번 작업에서는 Vercel 환경값·프로젝트 설정을 원격 변경하거나 배포하지 않았습니다.
