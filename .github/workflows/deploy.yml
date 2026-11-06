@@ -57,3 +57,15 @@ jobs:
           fi
           printf 'Commit: %s\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           cat deployment-url.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Update develop preview address
+        if: github.ref == 'refs/heads/develop'
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          deployment_url="$(cat deployment-url.txt)"
+          vercel alias set "$deployment_url" \
+            github-vercel-okki-develop-tech-for-impact.vercel.app \
+            --scope tech-for-impact
+          printf 'Develop preview: https://github-vercel-okki-develop-tech-for-impact.vercel.app\n' >> "$GITHUB_STEP_SUMMARY"

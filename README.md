@@ -71,6 +71,8 @@ PR에서는 CI 검사를 실행하고, 배포는 아래 브랜치의 push에서 
 
 개발은 `develop`에서 진행하고 `git push`로 Preview에 배포합니다. 검토가 끝나면 `develop` → `main` PR로 운영에 반영합니다. 기존 `preview` 브랜치 배포도 유지합니다.
 
+`develop` 고정 주소: [개발 Preview](https://github-vercel-okki-develop-tech-for-impact.vercel.app). 배포 성공 후 별칭을 최신 배포에 연결하며, Preview 접근 보호 설정은 그대로 적용됩니다.
+
 최초 설정:
 
 1. Vercel 대상 프로젝트를 준비하고 Root Directory는 저장소 루트, Framework는 `Other`, Output Directory는 `src`로 설정합니다. 빌드 명령은 `vercel.json`의 `npm run build`를 사용합니다.
