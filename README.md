@@ -41,6 +41,8 @@ Node.js **24.18.1**과 npm lockfile을 사용합니다.
 
 개발 프로젝트의 **Confirm email은 꺼짐**을 실제 조회로 확인했습니다. 서버는 가입 직전 설정을 다시 검사하여 확인 메일 발송 설정이 켜져 있으면 가입 요청을 차단합니다. 이메일은 로그인 식별자이며 소유가 확인된 연락처로 취급하지 않습니다. 앱 설정값을 사용자 Host 헤더로 대체하지 않습니다.
 
+배포 화면에서 “로그인 연결이 준비되지 않았습니다”가 나오면 `AUTH_ENABLED=true`, URL·Publishable key·APP_BASE_URL이 해당 배포의 Vercel 환경에 적용됐는지 확인합니다. 로컬 `.env.local`은 업로드되지 않습니다. develop은 Preview의 develop 브랜치 범위에 설정하고, Actions는 `vercel pull --environment=preview --git-branch="$GITHUB_REF_NAME"`으로 해당 브랜치 값을 가져옵니다. 환경값 변경은 기존 배포에 반영되지 않으므로 새 Actions 배포가 필요합니다.
+
 `npm run check`는 브라우저·서버 소스와 테스트의 구문을 검사하고, `npm run test:ci`는 기존 회귀 테스트와 Auth UI/API 테스트를 실행합니다. `npm run build`는 정적 UI를 `public/`에 복사하고 Next.js를 빌드합니다. `npm start`로 빌드 결과를 실행할 수 있습니다. `src/`가 UI 원본이며 `public/`·`.next/`는 생성물로 git에서 제외합니다. 정적 파일 서버만으로는 Auth API가 실행되지 않습니다.
 
 2026-11-06 검증: 구문 검사·테스트 11개·Next.js 빌드 통과. 로컬 브라우저에서 실제 개발 Auth에 합성 계정 1개를 생성하고, 비밀번호 불일치 차단·가입 후 자동 로그인·새로고침 세션 유지·로그아웃·오입력 차단·재로그인을 확인했습니다. MCP의 읽기 쿼리로 해당 계정 UUID 생성과 비밀번호 해시 존재를 확인했습니다(해시 원문 미조회). 테스트 계정은 개발 프로젝트에 남아 있습니다. 브라우저 UI/API 테스트의 provider 응답은 mock이며, 실제 연동 결과와 구분합니다. 배포·Actions 실행·업무 schema 변경은 수행하지 않았습니다.
