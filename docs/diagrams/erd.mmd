@@ -1,0 +1,9 @@
+erDiagram
+ providers ||--o{ listings : supplies
+ seekers ||--o{ matches : receives
+ listings ||--o{ matches : suggested
+ listings ||--o{ match_batches : batches
+ match_batches ||--|{ matches : approves
+ matches ||--o{ notifications : messages
+ notices ||--o{ notifications : alerts
+ notifications ||--o{ notification_attempts : attempts

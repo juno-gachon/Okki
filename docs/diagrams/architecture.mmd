@@ -1,0 +1,6 @@
+flowchart TD
+ U[청년·제공자] --> S[Next.js 서버: 검증·권한·업무]
+ A[운영자: Auth·membership] --> S
+ S --> D[Supabase: DB·Auth·outbox]
+ S <--> E[SOLAPI·LH API]
+ C[Cron: 인증·중복 제어] --> S

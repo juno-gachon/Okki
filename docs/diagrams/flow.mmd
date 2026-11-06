@@ -1,0 +1,6 @@
+flowchart TD
+ S[청년 인증·동의·조건] --> M[규칙 후보·운영자 승인]
+ P[방 접수: checking] --> V[전화 검수: alerting]
+ V --> M
+ M --> N[문자·문의 또는 사양]
+ N --> O[문의 matched·확인된 구함 found]

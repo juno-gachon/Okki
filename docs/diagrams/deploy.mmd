@@ -1,0 +1,6 @@
+flowchart TD
+ A[개발·합성 데이터] --> B[CI·Preview·테스트 DB]
+ B --> C[검증·정책·백업 확인]
+ C --> D[운영 schema·앱 배포]
+ D --> E[smoke test·발송 활성화]
+ E --> F[장애 시 중지·복구·대조]

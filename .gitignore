@@ -1,0 +1,19 @@
+# Ignore Markdown documents, except README.md (case-insensitive).
+*.[mM][dD]
+!README.md
+
+# Environment files, including local overrides, examples, and backups.
+.env
+.env.*
+*.env
+*.env.*
+
+# Local Vercel project settings and downloaded environment files.
+.vercel/
+
+# Dependencies and local deployment command output.
+node_modules/
+deployment-url.txt
+
+.vercel
+.env*

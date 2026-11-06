@@ -1,0 +1,12 @@
+stateDiagram-v2
+ [*] --> queued
+ queued --> processing : 선점
+ queued --> cancelled : 철회·마감
+ processing --> accepted : 업체 접수
+ processing --> failed : 미접수 확정
+ processing --> unknown : 결과 불명
+ accepted --> delivered : 전달 확인
+ accepted --> failed : 전달 실패
+ unknown --> accepted : 조회 대조
+ unknown --> failed : 미접수 확인
+ failed --> queued : 정책 재검증
