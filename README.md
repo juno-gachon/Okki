@@ -65,19 +65,22 @@ PR에서는 CI 검사를 실행하고, 배포는 아래 브랜치의 push에서 
 
 | 브랜치 | GitHub Environment | Vercel 환경 |
 | --- | --- | --- |
+| `develop` | `preview` | Preview |
 | `preview` | `preview` | Preview |
 | `main` | `production` | Production |
+
+개발은 `develop`에서 진행하고 `git push`로 Preview에 배포합니다. 검토가 끝나면 `develop` → `main` PR로 운영에 반영합니다. 기존 `preview` 브랜치 배포도 유지합니다.
 
 최초 설정:
 
 1. Vercel 대상 프로젝트를 준비하고 Root Directory는 저장소 루트, Framework는 `Other`, Output Directory는 `src`로 설정합니다. 빌드 명령은 `vercel.json`의 `npm run build`를 사용합니다.
 2. GitHub Settings → Environments에 `preview`, `production`을 만들고, 각각 아래 값을 등록합니다. 환경별 프로젝트·비밀값을 구분합니다.
-3. 각 Environment의 배포 허용 브랜치를 해당 브랜치로 제한합니다. `main`에는 CI 필수 검사와 브랜치 보호를 적용하고, `production`에는 배포 검토자를 설정합니다.
-4. `preview` push 후 Actions 결과와 배포 페이지·스크립트·스타일 로딩을 확인하고, 검토한 변경을 `main`에 반영합니다.
+3. `preview` Environment의 배포 허용 브랜치에 `develop`과 `preview`를 지정하고, `production`은 `main`으로 제한합니다. `main`에는 CI 필수 검사와 브랜치 보호를 적용하고, `production`에는 배포 검토자를 설정합니다.
+4. `develop` push 후 Actions 결과와 배포 페이지·스크립트·스타일 로딩을 확인하고, 검토한 변경을 `main`에 반영합니다.
 
 | 등록 위치 | 이름 |
 | --- | --- |
 | Environment Secret | `VERCEL_TOKEN` |
-| Environment Variables | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
+| Environment Secret | `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
 
 Vercel Git 자동 배포는 `vercel.json`에서 비활성화하여 Actions와의 중복 배포를 방지합니다. 실행 요약에는 커밋 SHA와 배포 URL이 기록됩니다. 실제 인증·DB·문자 연동은 별도로 구축·검증해야 합니다.
