@@ -29,6 +29,9 @@ function renderCoreRoute(route, id, postId, scroll) {
   nav(route);
   const routes = {
     "": home,
+    login: () => authPage(),
+    signup: () => authPage(true),
+    account: () => accountPage(),
     wait: () => waitPage(id),
     "wait-complete": () => waitComplete(id),
     request: () => waitPage("1"),
@@ -55,6 +58,9 @@ function renderCoreRoute(route, id, postId, scroll) {
   document.title =
     ({
       "": "옥천에서의 첫 집, 첫 이웃",
+      login: "로그인",
+      signup: "회원가입",
+      account: "내 계정",
       wait: "방 알림 등록",
       activity: "내 활동",
       provide: "방 정보 알려주기",
@@ -65,6 +71,8 @@ function renderCoreRoute(route, id, postId, scroll) {
     }[route] || "옥키") + " | 옥키";
   if (route === "wait" || route === "request") waitEvents(route === "request" ? "1" : id);
   if (route === "provide") provideEvents(id);
+  if (route === "login" || route === "signup") authEvents(route === "signup");
+  if (route === "account") accountEvents();
   if (route === "tasks") tasksEvents();
   if (route === "task") taskEvents(id);
   if (["consultation", "home"].includes(route)) consultationEvents(id, postId);
@@ -208,7 +216,9 @@ function render(scroll = true) {
   }
   if (typeof mapEvents === "function" && ["place", "area"].includes(route)) mapEvents();
   if (route === "provide" && id === "vacancy") $("#vacancy-form")?._vacancySync?.();
+  if (typeof updateAuthNavigation === "function") updateAuthNavigation();
 }
 
 /* 전체 기능 파일을 불러온 브라우저에서 첫 화면을 표시합니다. */
 if (typeof vacancyForm === "function") render();
+if (typeof authStart === "function") authStart();

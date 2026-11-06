@@ -296,6 +296,7 @@ nav = function (route) {
     ["life", "내 생활"],
     ["community/daily", "커뮤니티"],
     ["notifications", "알림"],
+    ["login", "로그인"],
   ]
     .map(
       ([p, t]) =>
@@ -309,6 +310,7 @@ nav = function (route) {
     ["life", "내 생활"],
     ["community/daily", "커뮤니티"],
     ["notifications", "알림"],
+    ["login", "로그인"],
   ]
     .map(([p, t]) => `<a href="#/${p}">${t}</a>`)
     .join("")}</nav>`;
@@ -2069,7 +2071,7 @@ function restoreDraft(f, d) {
 
 /* attachDrafts — 화면 요소에 필요한 입력·클릭 이벤트를 연결하고 사용자의 동작을 처리합니다. */
 function attachDrafts() {
-  const forms = $$("#main form").filter((f) => f.id && !["scope-form"].includes(f.id));
+  const forms = $$("#main form").filter((f) => f.id && f.id !== "auth-form" && !f.hasAttribute?.("data-no-draft") && !["scope-form"].includes(f.id));
   for (const f of forms) {
     if (f.querySelector(".draft-row")) continue;
     const d = read(draftKey(f), {});

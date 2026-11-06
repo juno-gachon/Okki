@@ -13,7 +13,10 @@
 
 # Dependencies and local deployment command output.
 node_modules/
+.next/
+public/
 deployment-url.txt
 
 .vercel
 .env*
+!.env.example
