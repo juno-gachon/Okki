@@ -1,6 +1,8 @@
-# Ignore Markdown documents, except README.md (case-insensitive).
+# Ignore Markdown documents, except reviewed repository documentation.
 *.[mM][dD]
 !README.md
+!AGENTS.md
+!/docs/security-review.md
 
 # Environment files, including local overrides, examples, and backups.
 .env

@@ -261,7 +261,7 @@ function vacancyDetail(id) {
   /* 조건이 충족되지 않거나 별도 처리가 필요한 경우를 먼저 확인합니다. */ if (!a)
     return unavailable();
   const d = a.data;
-  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("MY VACANCY INFORMATION", "퇴거 예정 정보를 " + (a.status === "철회·마감" ? "철회했어요." : "접수했어요."), "등록 내용은 내 활동에서 확인하고 수정할 수 있어요. 집주인과 협의한 내용이 달라지면 알려주세요.")}${activityTabs("tips")}<div class="activity-content"><div class="summary"><span class="badge">${esc(a.status)}</span><h2>${esc(d.region)} · ${esc(d.type)}</h2><p>퇴거 예정 ${esc(d.leaveDate || d.timingNote)} · ${esc(d.certainty)}</p><p>집주인 통지: ${esc(d.landlordNotified)}${d.notifiedAt ? " / " + esc(d.notifiedAt) + " " + esc(d.noticeMethod) : ""}</p><p>집주인 응답: ${esc(d.landlordResponse || "통지 전")} / 재임대 의사: ${esc(d.landlordIntent)}</p><p class="micro">${esc(a.id)} · 상세 주소·연락처 비공개</p></div><div class="notice">실제 입주 가능일과 다음 계약 조건은 별도 확인합니다. 등록만으로 공개 매물이 되거나 방 알림이 발송되지 않습니다.</div><div class="four-steps">${["정보 접수", "퇴거 일정·집주인 의사 확인", "안내 가능 여부 확인"].map((t, i) => `<div><span>0${i + 1}</span><h3>${t}</h3></div>`).join("")}</div><details class="formbox"><summary>내가 작성한 전체 등록 내용 · 비공개</summary><dl class="consultation-answer-list">${vacancySchema.map(([k, t]) => `<div><dt>${t}</dt><dd>${esc(d[k] || "미입력")}</dd></div>`).join("")}</dl><div class="upload-preview">${(a.photos || []).map((s) => `<img src="${s}" alt="퇴거 예정 집 사진">`).join("")}</div></details><div class="actions">${a.status !== "철회·마감" ? `<a class="btn" href="#/vacancy/edit/${id}">내 퇴거 예정 정보 보기·수정</a><button class="textlink danger" onclick="tipChange('${id}',true)">퇴거 취소 · 등록 철회</button>` : ""}<a class="btn secondary" href="#/activity/tips">내 방 등록 내역</a><button class="textlink" onclick="showHistory('${id}')">진행 기록</button></div></div></div>`;
+  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("MY VACANCY INFORMATION", "퇴거 예정 정보를 " + (a.status === "철회·마감" ? "철회했어요." : "접수했어요."), "등록 내용은 내 활동에서 확인하고 수정할 수 있어요. 집주인과 협의한 내용이 달라지면 알려주세요.")}${activityTabs("tips")}<div class="activity-content"><div class="summary"><span class="badge">${esc(a.status)}</span><h2>${esc(d.region)} · ${esc(d.type)}</h2><p>퇴거 예정 ${esc(d.leaveDate || d.timingNote)} · ${esc(d.certainty)}</p><p>집주인 통지: ${esc(d.landlordNotified)}${d.notifiedAt ? " / " + esc(d.notifiedAt) + " " + esc(d.noticeMethod) : ""}</p><p>집주인 응답: ${esc(d.landlordResponse || "통지 전")} / 재임대 의사: ${esc(d.landlordIntent)}</p><p class="micro">${esc(a.id)} · 상세 주소·연락처 비공개</p></div><div class="notice">실제 입주 가능일과 다음 계약 조건은 별도 확인합니다. 등록만으로 공개 매물이 되거나 방 알림이 발송되지 않습니다.</div><div class="four-steps">${["정보 접수", "퇴거 일정·집주인 의사 확인", "안내 가능 여부 확인"].map((t, i) => `<div><span>0${i + 1}</span><h3>${t}</h3></div>`).join("")}</div><details class="formbox"><summary>내가 작성한 전체 등록 내용 · 비공개</summary><dl class="consultation-answer-list">${vacancySchema.map(([k, t]) => `<div><dt>${t}</dt><dd>${esc(d[k] || "미입력")}</dd></div>`).join("")}</dl><div class="upload-preview">${(a.photos || []).map((s) => `<img src="${esc(s)}" alt="퇴거 예정 집 사진">`).join("")}</div></details><div class="actions">${a.status !== "철회·마감" ? `<a class="btn" href="#/vacancy/edit/${id}">내 퇴거 예정 정보 보기·수정</a><button class="textlink danger" ${uiActionAttrs("click", "tipChange_45", [id])}>퇴거 취소 · 등록 철회</button>` : ""}<a class="btn secondary" href="#/activity/tips">내 방 등록 내역</a><button class="textlink" ${uiActionAttrs("click", "showHistory_23", [id])}>진행 기록</button></div></div></div>`;
 }
 
 /* vacancyOldProvide, vacancyOldProvideEvents, vacancyOldTipDetail — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
@@ -306,8 +306,7 @@ reviewTip = function (id) {
   const form = $("#review-tip"),
     submit = form.onsubmit;
   const block = document.createElement("div");
-  block.innerHTML =
-    '<div class="notice">퇴거 통지 수령과 재임대·안내 동의를 구분합니다. 접수 당시 알리지 않았거나 모집 의사가 미확인이어도 안내 전에는 각각 확인해야 해요.</div>' +
+  setHTML(block, '<div class="notice">퇴거 통지 수령과 재임대·안내 동의를 구분합니다. 접수 당시 알리지 않았거나 모집 의사가 미확인이어도 안내 전에는 각각 확인해야 해요.</div>' +
     checkField(
       "vacancyIntent",
       "집주인의 다음 임차인 모집 의사를 별도로 확인했습니다.",
@@ -318,7 +317,7 @@ reviewTip = function (id) {
       "집주인의 연락·안내 허용 범위를 별도로 확인했습니다.",
       a.review?.vacancyPermission,
     ) +
-    selectField("확인한 실제 주거 유형", "verifiedType", types, a.review?.verifiedType);
+    selectField("확인한 실제 주거 유형", "verifiedType", types, a.review?.verifiedType));
   form.prepend(block);
   form.onsubmit = (e) => {
     const d = formData(form);

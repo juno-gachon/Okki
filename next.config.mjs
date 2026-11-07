@@ -5,10 +5,12 @@ export default {
   },
   async headers() {
     const development = process.env.NODE_ENV !== 'production';
-    // 기존 UI의 inline handler/style을 유지하며 외부 스크립트·폼 전송을 제한합니다.
+    // 보안: 외부 JS 이벤트 함수를 사용하며 HTML 이벤트 속성 실행은 차단합니다.
+    // style-src 예외는 기존 CSS용이며 JavaScript 실행 허용과 별개입니다.
     const csp = [
       "default-src 'self'", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'none'", "form-action 'self'",
-      `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ''}`,
+      `script-src 'self'${development ? " 'unsafe-eval'" : ''}`,
+      "script-src-attr 'none'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: blob:",
       `connect-src 'self'${development ? ' ws:' : ''}`,

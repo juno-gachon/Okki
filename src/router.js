@@ -54,7 +54,7 @@ function renderCoreRoute(route, id, postId, scroll) {
     about: aboutPage,
     admin: adminPage,
   };
-  $("#main").innerHTML = (routes[route] || notFound)();
+  setHTML($("#main"), (routes[route] || notFound)());
   document.title =
     ({
       "": "옥천에서의 첫 집, 첫 이웃",
@@ -119,7 +119,7 @@ function renderLifeRoute(route, id, sub, scroll) {
   if (route === "area" && id !== "wait") routes.area = mapPage;
   if (!routes[route]) return false;
   nav(route);
-  $("#main").innerHTML = routes[route]();
+  setHTML($("#main"), routes[route]());
   document.title =
     "옥키 | " +
     ({
@@ -161,7 +161,7 @@ function renderPublicRoute(route, page, id, group, edit, last, scroll) {
   else if (route === "public-admin") fn = phAdmin;
   if (!fn) return false;
   nav(route);
-  $("#main").innerHTML = fn();
+  setHTML($("#main"), fn());
   document.title = "공공주택 | 옥키";
   focusRenderedPage(scroll);
   if (route === "public" && page === "list") phListEvents();
@@ -179,7 +179,7 @@ function renderPublicRoute(route, page, id, group, edit, last, scroll) {
 function renderVacancyRoute(route, page, id, scroll) {
   if (route !== "vacancy" || typeof vacancyForm !== "function") return false;
   nav("provide");
-  $("#main").innerHTML = page === "edit" ? vacancyForm(id) : vacancyDetail(id);
+  setHTML($("#main"), page === "edit" ? vacancyForm(id) : vacancyDetail(id));
   document.title = "퇴거 예정 정보 | 옥키";
   if (page === "edit") vacancyEvents(id);
   attachDrafts();

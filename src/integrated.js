@@ -95,15 +95,21 @@ const publicGuard = (text) =>
 
 /* scopeFields — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function scopeFields(s = neighborhood) {
-  return `<div class="fields scope-input">${field("읍·면", `<select name="scopeRegion" aria-label="게시 읍·면" onchange="syncVillage(this)"><option value="">옥천 전체</option>${options(regions, s.region)}</select>`)}${field("리·마을", `<select name="scopeVillage" aria-label="게시 리·마을"><option value="">${s.region ? "해당 읍·면 전체" : "읍·면을 먼저 선택"}</option>${options(villageCatalog[s.region] || [], s.village)}</select>`)}</div>`;
+  return `<div class="fields scope-input">${field("읍·면", `<select name="scopeRegion" aria-label="게시 읍·면" ${uiActionAttrs("change", "syncVillage_61", [])}><option value="">옥천 전체</option>${options(regions, s.region)}</select>`)}${field("리·마을", `<select name="scopeVillage" aria-label="게시 리·마을"><option value="">${s.region ? "해당 읍·면 전체" : "읍·면을 먼저 선택"}</option>${options(villageCatalog[s.region] || [], s.village)}</select>`)}</div>`;
 }
 
 /* syncVillage — 선택된 값 또는 관련 상태를 갱신하고 필요한 화면 반영을 수행합니다. */
 function syncVillage(el) {
   const f = el.closest(".scope-input"),
     v = f.querySelector("[name=scopeVillage]");
-  v.innerHTML =
-    '<option value="">해당 읍·면 전체</option>' + options(villageCatalog[el.value] || []);
+  // 보안: 선택지 이름도 HTML 문자열로 조립하지 않고 텍스트로 표시합니다.
+  const choices = ['', ...(villageCatalog[el.value] || [])].map(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value || '해당 읍·면 전체';
+    return option;
+  });
+  v.replaceChildren(...choices);
 }
 
 /* getScope — 관련 데이터와 식별 정보를 읽거나 화면에서 사용하기 쉬운 형태로 준비합니다. */
@@ -116,7 +122,7 @@ function getScope(f) {
 
 /* scopeBar — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function scopeBar() {
-  return `<section class="scope-bar"><div class="section-kicker">OUR NEIGHBORHOOD</div><h2>현재 커뮤니티 · ${esc(scopeLabel(neighborhood))}</h2><form id="scope-form">${scopeFields()}<button class="btn small">이 동네 보기</button><button class="textlink" type="button" onclick="changeScope({region:'',village:''})">옥천 전체</button></form><p class="micro">선택한 범위에 게시된 글만 보여요. 읍·면과 리·마을 게시판은 구분합니다. 세부 목록은 확인된 옥천읍 리부터 제공합니다. <a href="https://oc.go.kr/www/contents.do?key=658" target="_blank" rel="noopener">지역명 출처</a></p>${neighborhood.region ? '<p class="micro">다른 동네의 글은 옥천 전체 게시판에서 찾아볼 수 있어요. 위의 “옥천 전체”를 선택하면 볼 수 있습니다.</p>' : ""}</section>`;
+  return `<section class="scope-bar"><div class="section-kicker">OUR NEIGHBORHOOD</div><h2>현재 커뮤니티 · ${esc(scopeLabel(neighborhood))}</h2><form id="scope-form">${scopeFields()}<button class="btn small">이 동네 보기</button><button class="textlink" type="button" ${uiActionAttrs("click", "changeScope_62", [])}>옥천 전체</button></form><p class="micro">선택한 범위에 게시된 글만 보여요. 읍·면과 리·마을 게시판은 구분합니다. 세부 목록은 확인된 옥천읍 리부터 제공합니다. <a href="https://oc.go.kr/www/contents.do?key=658" target="_blank" rel="noopener">지역명 출처</a></p>${neighborhood.region ? '<p class="micro">다른 동네의 글은 옥천 전체 게시판에서 찾아볼 수 있어요. 위의 “옥천 전체”를 선택하면 볼 수 있습니다.</p>' : ""}</section>`;
 }
 
 /* changeScope — 선택된 값 또는 관련 상태를 갱신하고 필요한 화면 반영을 수행합니다. */
@@ -166,7 +172,7 @@ function broaden() {
 function areaEmpty() {
   return (
     emptyState("이 범위에 아직 글이 없어요.", "다른 동네의 글을 자동으로 섞어 보여주지 않아요.") +
-    `<button class="btn secondary" onclick="broaden()">${neighborhood.village ? esc(neighborhood.region) : "옥천 전체"}로 범위 넓히기</button>`
+    `<button class="btn secondary" ${uiActionAttrs("click", "broaden_63", [])}>${neighborhood.village ? esc(neighborhood.region) : "옥천 전체"}로 범위 넓히기</button>`
   );
 }
 
@@ -218,7 +224,7 @@ function toggleSaved(kind, id, title, href) {
 
 /* saveButton — 변경된 입력값 또는 상태를 브라우저 저장소에 반영합니다. */
 function saveButton(kind, id, title, href) {
-  return `<button class="textlink" onclick='toggleSaved(${JSON.stringify(kind)},${JSON.stringify(id)},${esc(JSON.stringify(title))},${JSON.stringify(href)})'>${isSaved(kind, id) ? "✓ 저장됨" : "저장"}</button>`;
+  return `<button class="textlink" ${uiActionAttrs('click', 'toggleSaved', [kind, id, title, href])}>${isSaved(kind, id) ? "✓ 저장됨" : "저장"}</button>`;
 }
 
 /* photoField — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
@@ -236,12 +242,12 @@ function wirePhotos(f) {
   const draw = () => {
     const p = f.querySelector(".upload-preview");
     if (p)
-      p.innerHTML = f._photos
+      setHTML(p, f._photos
         .map(
           (s, i) =>
-            `<div><img src="${s}" alt="첨부 사진 ${i + 1}"><button type="button" data-delphoto="${i}">삭제</button></div>`,
+            `<div><img src="${esc(s)}" alt="첨부 사진 ${i + 1}"><button type="button" data-delphoto="${i}">삭제</button></div>`,
         )
-        .join("");
+        .join(""));
     f.querySelectorAll("[data-delphoto]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -290,7 +296,7 @@ const originalNavIntegrated = nav;
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 nav = function (route) {
   originalNavIntegrated(route);
-  $("#header").innerHTML = `<nav class="nav" aria-label="주 메뉴">${brand()}${[
+  setHTML($("#header"), `<nav class="nav" aria-label="주 메뉴">${brand()}${[
     ["wait", "방 알림 받기"],
     ["provide", "방 등록하기"],
     ["life", "내 생활"],
@@ -304,7 +310,7 @@ nav = function (route) {
     )
     .join(
       "",
-    )}<a class="btn secondary small" href="#/activity">내 활동 ↗</a><button class="mobile-toggle" aria-label="메뉴 열기" aria-expanded="false" onclick="toggleMenu(this)">☰</button></nav><nav class="mobile-nav">${[
+    )}<a class="btn secondary small" href="#/activity">내 활동 ↗</a><button class="mobile-toggle" aria-label="메뉴 열기" aria-expanded="false" ${uiActionAttrs("click", "toggleMenu_24", [])}>☰</button></nav><nav class="mobile-nav">${[
     ["wait", "방 알림 받기"],
     ["provide", "방 등록하기"],
     ["life", "내 생활"],
@@ -313,8 +319,10 @@ nav = function (route) {
     ["login", "로그인"],
   ]
     .map(([p, t]) => `<a href="#/${p}">${t}</a>`)
-    .join("")}</nav>`;
-  $("#footer").innerHTML = $("#footer").innerHTML.replace("생활권 지도", "우리 동네 지도");
+    .join("")}</nav>`);
+  // 보안: 문구 변경을 위해 기존 HTML 전체를 다시 파싱하지 않습니다.
+  $$('#footer a').filter(link => link.textContent === '생활권 지도')
+    .forEach(link => { link.textContent = '우리 동네 지도'; });
 };
 
 /* previousHomeIntegrated — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
@@ -358,7 +366,7 @@ function questionList() {
       !blockedAuthors.includes(q.author) &&
       (!questionQuery || (q.title + " " + q.body).includes(questionQuery)),
   );
-  return `<div class="container">${pageHead("NEIGHBORHOOD Q&A", "우리 동네의 궁금한 점을 이웃에게 물어봐요.", "선택한 동네가 질문과 글 작성에도 이어집니다.")}${scopeBar()}${localTabs()}<div class="section-head"><input aria-label="동네 질문 검색" value="${esc(questionQuery)}" placeholder="분리수거 / 버스 / 생활시설" onchange="questionQuery=this.value;render(false)"><a class="btn" href="#/ask">이 동네에 질문하기</a></div><div class="activity-content">${list.length ? list.map((q) => `<article class="application"><span class="badge ${acceptedAnswer(q) ? "accepted-badge" : ""}">${esc(questionStatus(q))}</span><p class="micro">${esc(scopeLabel(q.scope))} · 답변 ${visibleAnswers(q).length}개</p><h3>${esc(q.title)}</h3><p>${esc(q.body.slice(0, 120))}</p><a class="textlink" href="#/question/${q.id}">질문과 답변 보기 →</a></article>`).join("") : areaEmpty()}</div></div>`;
+  return `<div class="container">${pageHead("NEIGHBORHOOD Q&A", "우리 동네의 궁금한 점을 이웃에게 물어봐요.", "선택한 동네가 질문과 글 작성에도 이어집니다.")}${scopeBar()}${localTabs()}<div class="section-head"><input aria-label="동네 질문 검색" value="${esc(questionQuery)}" placeholder="분리수거 / 버스 / 생활시설" ${uiActionAttrs("change", "render_64", [])}><a class="btn" href="#/ask">이 동네에 질문하기</a></div><div class="activity-content">${list.length ? list.map((q) => `<article class="application"><span class="badge ${acceptedAnswer(q) ? "accepted-badge" : ""}">${esc(questionStatus(q))}</span><p class="micro">${esc(scopeLabel(q.scope))} · 답변 ${visibleAnswers(q).length}개</p><h3>${esc(q.title)}</h3><p>${esc(q.body.slice(0, 120))}</p><a class="textlink" href="#/question/${q.id}">질문과 답변 보기 →</a></article>`).join("") : areaEmpty()}</div></div>`;
 }
 
 /* askPage — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
@@ -402,7 +410,7 @@ function askEvents() {
       .trim()
       .split(/\s+/)
       .filter((w) => w.length > 1);
-    $("#similar-questions").innerHTML = questions
+    setHTML($("#similar-questions"), questions
       .filter(
         (q) =>
           !q.hidden && scopeMatch(q.scope, getScope(f)) && words.some((w) => q.title.includes(w)),
@@ -412,7 +420,7 @@ function askEvents() {
         (q) =>
           `<div class="notice">비슷한 질문: <a href="#/question/${q.id}">${esc(q.title)} →</a></div>`,
       )
-      .join("");
+      .join(""));
   };
   f.onsubmit = (e) => {
     e.preventDefault();
@@ -472,7 +480,7 @@ function visibleAnswers(q) {
 /* answerCard — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function answerCard(q, a) {
   const adopted = a.id === q.acceptedAnswerId;
-  return `<article class="formbox answer-card ${adopted ? "accepted-answer" : ""}" id="answer-${a.id}"><div class="answer-card-heading"><span class="badge">${esc(a.basis)} · 확인 전</span>${adopted ? '<span class="badge accepted-badge">✓ 질문자 채택</span>' : ""}</div><p class="micro">${esc(a.author)} · ${esc(a.period || "시기 미입력")} · 이해관계: ${esc(a.interest)} · ${esc(a.relation || "이웃")} (직접 입력)</p><p class="user-copy">${esc(a.body)}</p>${a.replies?.length ? `<section class="answer-thread" aria-label="이어지는 질문과 답변">${a.replies.map((r) => `<div class="notice"><p><b>${esc(r.author)}</b> · ${esc(r.role)}</p><p class="user-copy">${esc(r.body)}</p></div>`).join("")}</section>` : ""}${a.source ? `<a class="textlink" href="${esc(a.source)}" target="_blank" rel="noopener">작성자가 제시한 원문 ↗</a>` : ""}${adopted ? `<p class="micro">질문자가 가장 도움이 된 답변으로 선택했어요.${q.acceptedAt ? " · " + labelDate(q.acceptedAt) : ""}</p>` : ""}<div class="actions">${q.owned ? `<button class="${adopted ? "textlink" : "btn secondary small"}" onclick="acceptAnswer('${q.id}','${adopted ? "" : a.id}')">${adopted ? "채택 취소" : q.acceptedAnswerId ? "이 답변으로 채택 변경" : "이 답변 채택"}</button>` : ""}<button class="textlink" onclick="helpfulAnswer('${q.id}','${a.id}')">${a.helpful ? "✓ 도움됐어요" : "도움됐어요"}</button><a class="textlink" href="#/report/answer/${a.id}">신고·차단</a></div></article>`;
+  return `<article class="formbox answer-card ${adopted ? "accepted-answer" : ""}" id="answer-${a.id}"><div class="answer-card-heading"><span class="badge">${esc(a.basis)} · 확인 전</span>${adopted ? '<span class="badge accepted-badge">✓ 질문자 채택</span>' : ""}</div><p class="micro">${esc(a.author)} · ${esc(a.period || "시기 미입력")} · 이해관계: ${esc(a.interest)} · ${esc(a.relation || "이웃")} (직접 입력)</p><p class="user-copy">${esc(a.body)}</p>${a.replies?.length ? `<section class="answer-thread" aria-label="이어지는 질문과 답변">${a.replies.map((r) => `<div class="notice"><p><b>${esc(r.author)}</b> · ${esc(r.role)}</p><p class="user-copy">${esc(r.body)}</p></div>`).join("")}</section>` : ""}${a.source ? `<a class="textlink" href="${esc(a.source)}" target="_blank" rel="noopener">작성자가 제시한 원문 ↗</a>` : ""}${adopted ? `<p class="micro">질문자가 가장 도움이 된 답변으로 선택했어요.${q.acceptedAt ? " · " + labelDate(q.acceptedAt) : ""}</p>` : ""}<div class="actions">${q.owned ? `<button class="${adopted ? "textlink" : "btn secondary small"}" ${uiActionAttrs("click", "acceptAnswer_65", [q.id, adopted ? "" : a.id])}>${adopted ? "채택 취소" : q.acceptedAnswerId ? "이 답변으로 채택 변경" : "이 답변 채택"}</button>` : ""}<button class="textlink" ${uiActionAttrs("click", "helpfulAnswer_66", [q.id, a.id])}>${a.helpful ? "✓ 도움됐어요" : "도움됐어요"}</button><a class="textlink" href="#/report/answer/${a.id}">신고·차단</a></div></article>`;
 }
 
 /* questionDetail — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
@@ -482,7 +490,7 @@ function questionDetail(id) {
     return unavailable();
   const answers = visibleAnswers(q),
     chosen = acceptedAnswer(q);
-  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("NEIGHBORHOOD Q&A", esc(q.title), "게시 동네: " + esc(scopeLabel(q.scope)))}<div class="activity-content"><article class="formbox"><span class="badge ${chosen ? "accepted-badge" : ""}">${esc(questionStatus(q))}</span><p class="micro">${esc(q.author)} · ${esc(q.relation)} (직접 입력) · ${labelDate(q.created)}${q.owned ? " · 내가 쓴 질문" : ""}</p><p class="user-copy">${esc(q.body)}</p><div class="upload-preview">${q.photos.map((s) => `<img src="${s}" alt="질문 첨부 사진">`).join("")}</div><div class="actions">${saveButton("question", q.id, q.title, "#/question/" + q.id)}<button class="textlink" onclick="questionAction('${id}','notify')">새 답변 알림 ${q.notify ? "끄기" : "받기"}</button><a class="textlink" href="#/report/question/${id}">신고·차단</a>${q.returnTo ? `<a class="textlink" href="${esc(q.returnTo)}">공간 상담으로 돌아가기 →</a>` : ""}</div></article><div class="section-head"><h2>답변 ${answers.length}개</h2><button class="textlink" type="button" onclick="document.getElementById('answer-form').scrollIntoView({behavior:'smooth',block:'start'})">나도 답변하기 ↓</button></div><p class="micro">여러 이웃의 답변을 함께 살펴보세요. 질문 작성자는 가장 도움이 된 답변 하나를 채택할 수 있어요.</p>${q.owned && answers.length ? '<div class="notice">도움이 된 답변의 “이 답변 채택”을 눌러주세요. 다른 답변으로 변경하거나 채택을 취소할 수 있어요.</div>' : ""}${chosen && !answers.some((a) => a.id === chosen.id) ? '<div class="notice">채택한 답변은 숨김 또는 차단되어 현재 표시되지 않아요.</div>' : ""}${answers.length ? answers.map((a) => answerCard(q, a)).join("") : emptyState(q.answers.length ? "현재 표시할 수 있는 답변이 없어요." : "답변을 기다리고 있어요.", "이웃의 경험을 나누어주세요.")}<div class="actions">${q.owned && !chosen ? `<button class="btn secondary" onclick="questionAction('${id}','resolved')">궁금증이 해결됐어요</button><button class="textlink" onclick="questionAction('${id}','help')">아직 도움이 필요해요</button>` : ""}${q.owned && chosen && !answers.some((a) => a.id === chosen.id) ? `<button class="textlink" onclick="acceptAnswer('${id}','')">채택 취소</button>` : ""}<a class="textlink" href="#/area">시설·공식 안내 보기</a></div><form id="answer-form" class="formbox"><h2>나도 답할 수 있어요</h2><p class="micro">답변이나 채택이 있어도 새로운 경험과 정보를 보탤 수 있어요.</p><div class="fields">${selectField("답변의 근거 *", "basis", ["직접 경험", "공식 자료", "일반 의견"], "", true)}${selectField("이 동네와 관계 *", "relation", ["거주", "근무", "입주 예정"], "", true)}${inputField("표시 이름 *", "author", "", 'required maxlength="30"')}${inputField("경험 시기 또는 자료 확인일", "period", "", 'maxlength="60"')}${selectField("이해관계 *", "interest", ["없음", "집주인·관리자", "중개사", "사업자"], "없음", true)}${inputField("공식 자료 원문 주소 (공식 자료 선택 시 필수)", "source", "", 'type="url"')}</div>${textArea("답변 내용 *", "body", "", true)}${formError()}<button class="btn">답변 등록</button></form></div></div>`;
+  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("NEIGHBORHOOD Q&A", esc(q.title), "게시 동네: " + esc(scopeLabel(q.scope)))}<div class="activity-content"><article class="formbox"><span class="badge ${chosen ? "accepted-badge" : ""}">${esc(questionStatus(q))}</span><p class="micro">${esc(q.author)} · ${esc(q.relation)} (직접 입력) · ${labelDate(q.created)}${q.owned ? " · 내가 쓴 질문" : ""}</p><p class="user-copy">${esc(q.body)}</p><div class="upload-preview">${q.photos.map((s) => `<img src="${esc(s)}" alt="질문 첨부 사진">`).join("")}</div><div class="actions">${saveButton("question", q.id, q.title, "#/question/" + q.id)}<button class="textlink" ${uiActionAttrs("click", "questionAction_70", [id])}>새 답변 알림 ${q.notify ? "끄기" : "받기"}</button><a class="textlink" href="#/report/question/${id}">신고·차단</a>${q.returnTo ? `<a class="textlink" href="${esc(q.returnTo)}">공간 상담으로 돌아가기 →</a>` : ""}</div></article><div class="section-head"><h2>답변 ${answers.length}개</h2><button class="textlink" type="button" ${uiActionAttrs("click", "getElementById_71", [])}>나도 답변하기 ↓</button></div><p class="micro">여러 이웃의 답변을 함께 살펴보세요. 질문 작성자는 가장 도움이 된 답변 하나를 채택할 수 있어요.</p>${q.owned && answers.length ? '<div class="notice">도움이 된 답변의 “이 답변 채택”을 눌러주세요. 다른 답변으로 변경하거나 채택을 취소할 수 있어요.</div>' : ""}${chosen && !answers.some((a) => a.id === chosen.id) ? '<div class="notice">채택한 답변은 숨김 또는 차단되어 현재 표시되지 않아요.</div>' : ""}${answers.length ? answers.map((a) => answerCard(q, a)).join("") : emptyState(q.answers.length ? "현재 표시할 수 있는 답변이 없어요." : "답변을 기다리고 있어요.", "이웃의 경험을 나누어주세요.")}<div class="actions">${q.owned && !chosen ? `<button class="btn secondary" ${uiActionAttrs("click", "questionAction_67", [id])}>궁금증이 해결됐어요</button><button class="textlink" ${uiActionAttrs("click", "questionAction_68", [id])}>아직 도움이 필요해요</button>` : ""}${q.owned && chosen && !answers.some((a) => a.id === chosen.id) ? `<button class="textlink" ${uiActionAttrs("click", "acceptAnswer_69", [id])}>채택 취소</button>` : ""}<a class="textlink" href="#/area">시설·공식 안내 보기</a></div><form id="answer-form" class="formbox"><h2>나도 답할 수 있어요</h2><p class="micro">답변이나 채택이 있어도 새로운 경험과 정보를 보탤 수 있어요.</p><div class="fields">${selectField("답변의 근거 *", "basis", ["직접 경험", "공식 자료", "일반 의견"], "", true)}${selectField("이 동네와 관계 *", "relation", ["거주", "근무", "입주 예정"], "", true)}${inputField("표시 이름 *", "author", "", 'required maxlength="30"')}${inputField("경험 시기 또는 자료 확인일", "period", "", 'maxlength="60"')}${selectField("이해관계 *", "interest", ["없음", "집주인·관리자", "중개사", "사업자"], "없음", true)}${inputField("공식 자료 원문 주소 (공식 자료 선택 시 필수)", "source", "", 'type="url"')}</div>${textArea("답변 내용 *", "body", "", true)}${formError()}<button class="btn">답변 등록</button></form></div></div>`;
 }
 
 /* acceptAnswer — 질문에 달린 답변의 채택 가능 여부를 확인하고 선택한 답변의 채택 상태를 저장합니다. */
@@ -642,12 +650,12 @@ function reviewsPage() {
     const transport = applications.find((a) => a.kind === "waiting")?.data.transport;
     list = list.filter((x) => transport && x.transport === transport);
   }
-  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("LIFE, AS EXPERIENCED", "살아본 경험으로 생활을 살펴봐요.", "개인의 경험 시점과 확인 범위를 함께 읽어주세요.")}${scopeBar()}${localTabs()}<div class="filters"><select aria-label="후기 주제" onchange="reviewTopic=this.value;render(false)">${options(["전체", "소음", "채광", "냉난방", "습기", "관리비", "통근", "주차", "택배"], reviewTopic)}</select><select aria-label="후기 정렬" onchange="reviewSort=this.value;render(false)">${options(["최근 경험", "내 조건과 비슷한 경험", "인증된 경험"], reviewSort)}</select><a class="btn small" href="#/review-write">내 경험도 남기기</a></div><div class="notice">생활권 경험은 특정 방의 품질을 보증하지 않습니다. ‘내 조건과 비슷한 경험’은 등록한 이동 수단이 같은 후기를 보여줘요.</div><div class="activity-content">${list.length ? list.map(reviewCard).join("") : areaEmpty()}</div></div>`;
+  /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("LIFE, AS EXPERIENCED", "살아본 경험으로 생활을 살펴봐요.", "개인의 경험 시점과 확인 범위를 함께 읽어주세요.")}${scopeBar()}${localTabs()}<div class="filters"><select aria-label="후기 주제" ${uiActionAttrs("change", "render_72", [])}>${options(["전체", "소음", "채광", "냉난방", "습기", "관리비", "통근", "주차", "택배"], reviewTopic)}</select><select aria-label="후기 정렬" ${uiActionAttrs("change", "render_73", [])}>${options(["최근 경험", "내 조건과 비슷한 경험", "인증된 경험"], reviewSort)}</select><a class="btn small" href="#/review-write">내 경험도 남기기</a></div><div class="notice">생활권 경험은 특정 방의 품질을 보증하지 않습니다. ‘내 조건과 비슷한 경험’은 등록한 이동 수단이 같은 후기를 보여줘요.</div><div class="activity-content">${list.length ? list.map(reviewCard).join("") : areaEmpty()}</div></div>`;
 }
 
 /* reviewCard — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function reviewCard(x) {
-  return `<article class="formbox" id="review-${x.id}"><span class="badge">${esc(x.experience)} · ${x.verified ? "확인한 경험" : "이용자 경험 · 인증 전"}</span><p class="micro">${esc(scopeLabel(x.scope))} · ${esc(x.period)} · ${esc(x.author)} · 이해관계 ${esc(x.interest)}</p><h3>${esc(x.title || x.topics.join(" · ") || "생활 경험")}</h3><p class="user-copy">${esc(x.body || "선택한 항목의 경험을 나눴어요.")}</p>${x.commute ? `<p class="user-copy"><b>통근 경험</b><br>${esc(x.commute)}</p>` : ""}<p class="subtle">이동: ${esc(x.transport || "미입력")} / 관리비: ${esc(x.fee || "기억나지 않음")} / 추가 비용: ${esc(x.extra || "미입력")}</p>${x.discussion?.length ? `<section class="review-discussion" aria-label="후기 질문과 답변"><h4>이 후기에 달린 질문과 답변</h4>${x.discussion.map((d) => `<div class="notice"><p><b>${esc(d.author)}</b> · 질문</p><p class="user-copy">${esc(d.question)}</p><p><b>${esc(x.author)}</b> · 작성자 답변</p><p class="user-copy">${esc(d.reply)}</p>${d.followUp ? `<p><b>${esc(d.author)}</b> · 추가 질문</p><p class="user-copy">${esc(d.followUp)}</p><p><b>${esc(x.author)}</b> · 작성자 추가 답변</p><p class="user-copy">${esc(d.followUpReply)}</p>` : ""}</div>`).join("")}</section>` : ""}<div class="actions">${saveButton("review", x.id, x.title || x.topics.join(" · ") || "생활 경험", "#/review/" + x.id)}<button class="textlink" onclick="reviewHelpful('${x.id}')">${x.helpful ? "✓ 도움됐어요" : "도움됐어요"}</button><a class="textlink" href="#/ask">추가 질문하기</a><a class="textlink" href="#/report/review/${x.id}">신고</a></div></article>`;
+  return `<article class="formbox" id="review-${x.id}"><span class="badge">${esc(x.experience)} · ${x.verified ? "확인한 경험" : "이용자 경험 · 인증 전"}</span><p class="micro">${esc(scopeLabel(x.scope))} · ${esc(x.period)} · ${esc(x.author)} · 이해관계 ${esc(x.interest)}</p><h3>${esc(x.title || x.topics.join(" · ") || "생활 경험")}</h3><p class="user-copy">${esc(x.body || "선택한 항목의 경험을 나눴어요.")}</p>${x.commute ? `<p class="user-copy"><b>통근 경험</b><br>${esc(x.commute)}</p>` : ""}<p class="subtle">이동: ${esc(x.transport || "미입력")} / 관리비: ${esc(x.fee || "기억나지 않음")} / 추가 비용: ${esc(x.extra || "미입력")}</p>${x.discussion?.length ? `<section class="review-discussion" aria-label="후기 질문과 답변"><h4>이 후기에 달린 질문과 답변</h4>${x.discussion.map((d) => `<div class="notice"><p><b>${esc(d.author)}</b> · 질문</p><p class="user-copy">${esc(d.question)}</p><p><b>${esc(x.author)}</b> · 작성자 답변</p><p class="user-copy">${esc(d.reply)}</p>${d.followUp ? `<p><b>${esc(d.author)}</b> · 추가 질문</p><p class="user-copy">${esc(d.followUp)}</p><p><b>${esc(x.author)}</b> · 작성자 추가 답변</p><p class="user-copy">${esc(d.followUpReply)}</p>` : ""}</div>`).join("")}</section>` : ""}<div class="actions">${saveButton("review", x.id, x.title || x.topics.join(" · ") || "생활 경험", "#/review/" + x.id)}<button class="textlink" ${uiActionAttrs("click", "reviewHelpful_74", [x.id])}>${x.helpful ? "✓ 도움됐어요" : "도움됐어요"}</button><a class="textlink" href="#/ask">추가 질문하기</a><a class="textlink" href="#/report/review/${x.id}">신고</a></div></article>`;
 }
 
 /* reviewHelpful — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -908,8 +916,7 @@ function registrationPage(mode) {
       : "지금 사는 집에서, 함께 살 사람을 찾아요.",
     "정확한 주소와 연락처는 비공개로 접수하며 확인 전에는 안내하지 않습니다.",
     "registration-" + mode,
-    `<nav class="tabs"><a class="tab" href="#/provide/broker">공인중개사 매물</a><a class="tab" href="#/provide/resident">거주자 함께 살 사람</a></nav>` +
-      registrationSchemas[mode]
+    registrationSchemas[mode]
         .map(([n, t, fields]) =>
           box(
             n,
@@ -990,7 +997,7 @@ const previousTipDetailIntegrated = tipDetail;
 tipDetail = function (id) {
   const a = applications.find((a) => a.id === id);
   if (!a || !registrationSchemas[a.mode]) return previousTipDetailIntegrated(id);
-  return `<div class="container">${pageHead("MY ROOM REGISTRATION", "방 등록을 접수했어요.", "확인이 끝난 정보만 공개하거나 방 알림으로 안내합니다.")}${activityTabs("tips")}<div class="activity-content"><div class="summary"><span class="badge">${esc(a.status)}</span><h2>${esc(a.data.title)}</h2><p>${a.mode === "broker" ? "공인중개사 매물" : "거주자 공동거주 모집"} · ${esc(a.id)}</p><p class="micro">${a.mode === "broker" ? "사무소 확인과 개별 매물 확인은 별도입니다." : "거주·모집 동의가 확인되기 전에는 공개하지 않습니다."}</p></div>${registrationSchemas[a.mode].map(([n, t, fields]) => box(n, t, `<dl class="consultation-answer-list">${fields.map(([k, label]) => `<div><dt>${label}</dt><dd>${esc(a.data[k + "Unknown"] ? "미정" : a.data[k] || "미입력")}</dd></div>`).join("")}</dl>`)).join("")}<div class="upload-preview">${a.photos.map((s) => `<img src="${s}" alt="등록 사진">`).join("")}</div><div class="actions"><button class="btn secondary" onclick="tipChange('${id}',false)">수정 요청</button><button class="textlink" onclick="closeRegistration('${id}')">모집·거래 완료</button><button class="textlink danger" onclick="tipChange('${id}',true)">철회</button><button class="textlink" onclick="showHistory('${id}')">진행 기록</button></div></div></div>`;
+  return `<div class="container">${pageHead("MY ROOM REGISTRATION", "방 등록을 접수했어요.", "확인이 끝난 정보만 공개하거나 방 알림으로 안내합니다.")}${activityTabs("tips")}<div class="activity-content"><div class="summary"><span class="badge">${esc(a.status)}</span><h2>${esc(a.data.title)}</h2><p>${a.mode === "broker" ? "공인중개사 매물" : "거주자 공동거주 모집"} · ${esc(a.id)}</p><p class="micro">${a.mode === "broker" ? "사무소 확인과 개별 매물 확인은 별도입니다." : "거주·모집 동의가 확인되기 전에는 공개하지 않습니다."}</p></div>${registrationSchemas[a.mode].map(([n, t, fields]) => box(n, t, `<dl class="consultation-answer-list">${fields.map(([k, label]) => `<div><dt>${label}</dt><dd>${esc(a.data[k + "Unknown"] ? "미정" : a.data[k] || "미입력")}</dd></div>`).join("")}</dl>`)).join("")}<div class="upload-preview">${a.photos.map((s) => `<img src="${esc(s)}" alt="등록 사진">`).join("")}</div><div class="actions"><button class="btn secondary" ${uiActionAttrs("click", "tipChange_44", [id])}>수정 요청</button><button class="textlink" ${uiActionAttrs("click", "closeRegistration_75", [id])}>모집·거래 완료</button><button class="textlink danger" ${uiActionAttrs("click", "tipChange_45", [id])}>철회</button><button class="textlink" ${uiActionAttrs("click", "showHistory_23", [id])}>진행 기록</button></div></div></div>`;
 };
 
 /* closeRegistration — 선택한 항목이나 진행 중인 상태를 종료하거나 삭제하는 흐름을 처리합니다. */
@@ -1083,7 +1090,7 @@ reviewTip = function (id) {
   if (!registrationSchemas[a.mode] || !f) return;
   const fieldset = document.createElement("fieldset");
   fieldset.className = "formbox";
-  fieldset.innerHTML = `<legend>${a.mode === "broker" ? "사무소·매물 분리 확인" : "현재 거주·모집 조건 확인"}</legend>${(a.mode ===
+  setHTML(fieldset, `<legend>${a.mode === "broker" ? "사무소·매물 분리 확인" : "현재 거주·모집 조건 확인"}</legend>${(a.mode ===
   "broker"
     ? [
         ["officeChecked", "중개사무소 등록번호·대표·담당자 확인"],
@@ -1095,7 +1102,7 @@ reviewTip = function (id) {
       ]
   )
     .map(([k, t]) => checkField(k, t, !!a.review?.[k]))
-    .join("")}`;
+    .join("")}`);
   f.prepend(fieldset);
   const submit = f.onsubmit;
   f.onsubmit = (e) => {
@@ -1391,7 +1398,7 @@ function savedPage(tab = "space") {
             "",
           )}<tr><th>이어서 보기</th>${ns.map((n) => `<td><a href="#/alert/${n.id}" class="textlink">${n.status === "마감" ? "마감 정보" : "공간 정보와 상담"} →</a></td>`).join("")}</tr></tbody></table></div>`
       : ""
-  }${list.length ? list.map((x) => `<article class="application"><h3>${esc(x.title)}</h3><p class="micro">${x.created ? labelDate(x.created) + " 저장" : "선택한 할 일"} · 변경 알림 ${x.notify ? "켜짐" : "꺼짐"}</p><div class="actions"><a class="btn small" href="${esc(x.href)}">내용 보기 →</a><button class="textlink" onclick="savedSubscription('${x.kind}','${x.id}')">변경 알림 ${x.notify ? "끄기" : "받기"}</button>${saveButton(x.kind, x.id, x.title, x.href)}</div></article>`).join("") : emptyState("이 분류에 저장한 정보가 없어요.")}<a class="textlink" href="#/ask">비교 중 궁금한 점 질문하기 →</a></div></div>`;
+  }${list.length ? list.map((x) => `<article class="application"><h3>${esc(x.title)}</h3><p class="micro">${x.created ? labelDate(x.created) + " 저장" : "선택한 할 일"} · 변경 알림 ${x.notify ? "켜짐" : "꺼짐"}</p><div class="actions"><a class="btn small" href="${esc(x.href)}">내용 보기 →</a><button class="textlink" ${uiActionAttrs("click", "savedSubscription_76", [x.kind, x.id])}>변경 알림 ${x.notify ? "끄기" : "받기"}</button>${saveButton(x.kind, x.id, x.title, x.href)}</div></article>`).join("") : emptyState("이 분류에 저장한 정보가 없어요.")}<a class="textlink" href="#/ask">비교 중 궁금한 점 질문하기 →</a></div></div>`;
 }
 
 /* savedSubscription — 변경된 입력값 또는 상태를 브라우저 저장소에 반영합니다. */
@@ -1417,7 +1424,7 @@ consultationPage = function (id, parentId) {
   const n = alerts.find((x) => x.listingId === id && x.waitId === parentId),
     h = n?.snapshot || homes.find((x) => x.id === id);
   if (!h) return html;
-  const block = `<section class="formbox experience-bridge"><span class="section-kicker">BEFORE YOU MOVE IN</span><h2>집의 조건 다음에는, 살아본 사람의 경험</h2><p>${esc(h.region)}의 통근·관리비·시설 경험을 찾아보세요. 비공개 주소와 등록자 연락처는 질문에 붙지 않아요.</p><div class="actions"><button class="btn secondary" onclick="fromSpace('${h.id}','${parentId || ""}','ask')">이웃에게 물어보기</button><button class="textlink" onclick="fromSpace('${h.id}','${parentId || ""}','reviews')">생활권 후기 보기 →</button>${n ? saveButton("space", n.id, h.name, "#/alert/" + n.id) : ""}<a class="textlink" href="#/saved">저장·비교 →</a><a class="textlink" href="#/report/space/${id}">정보 오류 알리기</a></div><p class="micro">이 건물에 연결된 후기는 아직 없어요. 후기 없음은 나쁜 공간이라는 뜻이 아닙니다.</p></section>`;
+  const block = `<section class="formbox experience-bridge"><span class="section-kicker">BEFORE YOU MOVE IN</span><h2>집의 조건 다음에는, 살아본 사람의 경험</h2><p>${esc(h.region)}의 통근·관리비·시설 경험을 찾아보세요. 비공개 주소와 등록자 연락처는 질문에 붙지 않아요.</p><div class="actions"><button class="btn secondary" ${uiActionAttrs("click", "fromSpace_77", [h.id, parentId || ""])}>이웃에게 물어보기</button><button class="textlink" ${uiActionAttrs("click", "fromSpace_78", [h.id, parentId || ""])}>생활권 후기 보기 →</button>${n ? saveButton("space", n.id, h.name, "#/alert/" + n.id) : ""}<a class="textlink" href="#/saved">저장·비교 →</a><a class="textlink" href="#/report/space/${id}">정보 오류 알리기</a></div><p class="micro">이 건물에 연결된 후기는 아직 없어요. 후기 없음은 나쁜 공간이라는 뜻이 아닙니다.</p></section>`;
   return html.replace(
     '<section class="consultation-form-wrap"',
     block + '<section class="consultation-form-wrap"',
@@ -1478,7 +1485,7 @@ function mapPage(...args) {
           (!placeQuery || (p.title + p.category).includes(placeQuery)),
       ),
       p = visible.find((x) => x.id === selectedPlace) || visible[0];
-    return `<div class="container">${pageHead("NEIGHBORHOOD MAP", "우리 동네에 필요한 정보를 지도에서 찾아요.", "분리수거·교통·공공시설과 생활 공지를 함께 확인해요.")}<div class="notice warning">시설·위치는 설계용 예시이며 실제 카카오맵은 연결되지 않았습니다. 운영시간·상세 주소·출처는 확인 필요로 표시합니다.</div><div class="filters"><select aria-label="지도 지역" onchange="neighborhood={region:this.value,village:''};save('neighborhood',neighborhood);render(false)"><option value="">옥천 전체</option>${options(regions, neighborhood.region)}</select><input aria-label="시설 검색" placeholder="시설 이름·분류" value="${esc(placeQuery)}" onchange="placeQuery=this.value;render(false)"><select aria-label="시설 분류" onchange="placeCategory=this.value;render(false)">${options(["전체", "분리수거·폐기물", "교통", "공공시설", "건강·의료", "생활 공지"], placeCategory)}</select><button class="textlink" onclick="toast('실제 위치 연동 전입니다. 읍·면을 직접 선택해주세요.')">내 위치 보기</button></div><div class="area-layout"><div class="map-panel area-map">${mapSvg()}<div class="map-note">도식 지도 · 실제 좌표 아님</div>${visible.map((x) => `<button class="marker ${p?.id === x.id ? "selected" : ""}" style="left:${x.x}%;top:${x.y}%" onclick="selectedPlace='${x.id}';render(false)">${esc(x.title)}</button>`).join("")}</div><div class="formbox">${p ? `<span class="badge">${p.category} · 예시</span><h2>${p.title}</h2><p>위치: ${p.region} 내 예시 지점</p><dl class="summary-grid"><div><dt>상세 주소</dt><dd>운영 자료 확인 후 표시</dd></div><div><dt>운영시간</dt><dd>확인 필요</dd></div><div><dt>공식 출처</dt><dd>확인 필요</dd></div><div><dt>마지막 확인일</dt><dd>미등록</dd></div></dl><p>${p.guide}</p><div class="actions"><a class="btn small" href="https://map.kakao.com/?q=${encodeURIComponent(p.region + " " + p.category)}" target="_blank" rel="noopener">카카오맵에서 검색·길찾기 ↗</a>${saveButton("place", p.id, p.title, "#/place/" + p.id)}<a class="textlink" href="#/report/place/${p.id}">정보 수정 제안</a><a class="textlink" href="#/notification-settings">변경 알림 설정</a></div>` : emptyState("이 조건의 시설이 없어요.", "지역 또는 분류를 바꿔보세요.")}</div></div><section class="section"><h2>이 장소 주변의 생활 공지</h2><div class="notice">현재 확인된 유효한 공지가 없어요. 적용 구역·기간·변경 전후·출처가 확인된 공지만 안내합니다.</div><h3>지도에서 찾은 장소</h3>${visible.map((p) => `<button class="listing" onclick="selectedPlace='${p.id}';render(false)">${p.title} · ${p.category} →</button>`).join("")}<div class="actions"><a class="btn secondary" href="#/saved/place">저장한 장소 보기</a><a class="textlink" href="#/questions">동네 질문과 후기</a><a class="textlink" href="#/area/wait">희망 생활권을 방 알림 조건에 추가 →</a></div></section></div>`;
+    return `<div class="container">${pageHead("NEIGHBORHOOD MAP", "우리 동네에 필요한 정보를 지도에서 찾아요.", "분리수거·교통·공공시설과 생활 공지를 함께 확인해요.")}<div class="notice warning">시설·위치는 설계용 예시이며 실제 카카오맵은 연결되지 않았습니다. 운영시간·상세 주소·출처는 확인 필요로 표시합니다.</div><div class="filters"><select aria-label="지도 지역" ${uiActionAttrs("change", "save_80", [])}><option value="">옥천 전체</option>${options(regions, neighborhood.region)}</select><input aria-label="시설 검색" placeholder="시설 이름·분류" value="${esc(placeQuery)}" ${uiActionAttrs("change", "render_81", [])}><select aria-label="시설 분류" ${uiActionAttrs("change", "render_82", [])}>${options(["전체", "분리수거·폐기물", "교통", "공공시설", "건강·의료", "생활 공지"], placeCategory)}</select><button class="textlink" ${uiActionAttrs("click", "toast_83", [])}>내 위치 보기</button></div><div class="area-layout"><div class="map-panel area-map">${mapSvg()}<div class="map-note">도식 지도 · 실제 좌표 아님</div>${visible.map((x) => `<button class="marker ${p?.id === x.id ? "selected" : ""}" style="left:${x.x}%;top:${x.y}%" ${uiActionAttrs("click", "String_79", [x.id])}>${esc(x.title)}</button>`).join("")}</div><div class="formbox">${p ? `<span class="badge">${p.category} · 예시</span><h2>${p.title}</h2><p>위치: ${p.region} 내 예시 지점</p><dl class="summary-grid"><div><dt>상세 주소</dt><dd>운영 자료 확인 후 표시</dd></div><div><dt>운영시간</dt><dd>확인 필요</dd></div><div><dt>공식 출처</dt><dd>확인 필요</dd></div><div><dt>마지막 확인일</dt><dd>미등록</dd></div></dl><p>${p.guide}</p><div class="actions"><a class="btn small" href="https://map.kakao.com/?q=${encodeURIComponent(p.region + " " + p.category)}" target="_blank" rel="noopener">카카오맵에서 검색·길찾기 ↗</a>${saveButton("place", p.id, p.title, "#/place/" + p.id)}<a class="textlink" href="#/report/place/${p.id}">정보 수정 제안</a><a class="textlink" href="#/notification-settings">변경 알림 설정</a></div>` : emptyState("이 조건의 시설이 없어요.", "지역 또는 분류를 바꿔보세요.")}</div></div><section class="section"><h2>이 장소 주변의 생활 공지</h2><div class="notice">현재 확인된 유효한 공지가 없어요. 적용 구역·기간·변경 전후·출처가 확인된 공지만 안내합니다.</div><h3>지도에서 찾은 장소</h3>${visible.map((p) => `<button class="listing" ${uiActionAttrs("click", "String_79", [p.id])}>${p.title} · ${p.category} →</button>`).join("")}<div class="actions"><a class="btn secondary" href="#/saved/place">저장한 장소 보기</a><a class="textlink" href="#/questions">동네 질문과 후기</a><a class="textlink" href="#/area/wait">희망 생활권을 방 알림 조건에 추가 →</a></div></section></div>`;
   };
 
   /* 처리 단계 2: 기존 neighborhood-map.js의 관련 코드를 이곳으로 모았습니다. */
@@ -1495,7 +1502,7 @@ function mapPage(...args) {
       invalid =
         location.hash.startsWith("#/place/") &&
         !facilities.some((p) => p.id === decodeURIComponent(location.hash.split("/")[2] || ""));
-    return `<div class="container neighborhood-page"><div class="actions map-back"><a class="textlink" href="#/activity">← 내 활동으로 돌아가기</a></div>${pageHead("NEIGHBORHOOD MAP", "우리 동네에 필요한 정보를 지도에서 찾아요.", `${esc(s.region || "옥천 전체")} / ${esc(s.category)}${p ? " / 마지막으로 본 장소: " + esc(p.title) : " / 장소를 선택해 생활 정보를 확인하세요."}`)}<div class="notice warning">현재 지도와 시설 위치는 도식입니다. 실제 카카오맵 연결 전이며, 운영시간·주소·공식 출처가 확인되지 않은 항목은 “확인 필요”로 안내합니다.</div>${invalid ? '<div class="notice warning" role="status">이 장소는 삭제되었거나 현재 표시할 수 없어요. 다른 장소를 찾아보세요.</div>' : ""}<div class="map-search-row"><label>읍·면<select aria-label="지도 지역" onchange="mapFilter('region',this.value)"><option value="">옥천 전체</option>${options(regions, s.region)}</select></label><form onsubmit="mapSearch(event)" role="search"><input aria-label="장소 이름·분류 검색" name="query" placeholder="분리수거장·시설 이름·분류 검색" value="${esc(s.query)}"><button class="btn small" type="submit">검색</button></form></div><nav class="tabs map-categories" aria-label="시설 분류">${mapCategories.map((c) => `<button class="tab ${s.category === c ? "active" : ""}" aria-pressed="${s.category === c}" onclick="mapFilter('category','${c}')">${c}</button>`).join("")}</nav><div class="area-layout neighborhood-layout"><div class="map-panel neighborhood-map" id="neighborhood-map" tabindex="0" role="region" aria-label="생활권 도식 지도. 방향키로 이동하고 확대·축소 버튼을 이용하세요.">${mapWorld(s, visible)}<div class="map-tools"><button aria-label="지도 확대" onclick="mapZoom(.25)" ${s.zoom >= 2.5 ? "disabled" : ""}>＋</button><button aria-label="지도 축소" onclick="mapZoom(-.25)" ${s.zoom <= 1 ? "disabled" : ""}>−</button><button class="map-reset" onclick="mapReset()">위치 초기화</button></div><div class="map-pan" aria-label="지도 이동"><button aria-label="지도 위로 이동" onclick="mapPan(0,-10)">↑</button><span><button aria-label="지도 왼쪽 이동" onclick="mapPan(-10,0)">←</button><button aria-label="지도 아래로 이동" onclick="mapPan(0,10)">↓</button><button aria-label="지도 오른쪽 이동" onclick="mapPan(10,0)">→</button></span></div><div class="map-note">도식 지도 · 확대 ${Math.round(s.zoom * 100)}% · 드래그로 이동</div></div><aside class="formbox place-detail" aria-label="선택한 장소 상세 정보" aria-live="polite">${p ? `<span class="badge">${esc(p.category)}</span><h2>${esc(p.title)}</h2><p class="micro">${esc(p.region)} 내 예시 지점</p><dl><dt>상세 주소</dt><dd>운영 자료 확인 후 표시</dd><dt>운영시간</dt><dd>${esc(placeMeta[p.id].hours)}</dd><dt>이용 안내</dt><dd>${esc(placeMeta[p.id].usage)}</dd><dt>출처와 최신 확인</dt><dd>공식 출처: 확인 필요<br>마지막 확인일: 미등록</dd></dl><div class="actions"><a class="btn small" href="https://map.kakao.com/?q=${encodeURIComponent(p.region + " " + p.category)}" target="_blank" rel="noopener">카카오맵 검색·길찾기 ↗</a>${saveButton("place", p.id, p.title, "#/place/" + p.id)}<a class="textlink" href="#/notification-settings">변경 알림 설정</a><a class="textlink" href="#/report/place/${p.id}">정보 수정 제안</a></div>` : emptyState(visible.length ? "장소를 선택해주세요." : "이 조건의 시설이 없어요.", visible.length ? "지도 표시나 아래 목록을 누르면 이용 안내를 볼 수 있어요." : "지역·분류·검색어를 바꿔보세요. 확인되지 않은 시설을 자동으로 추가하지 않아요.")}</aside></div><p class="micro map-legend">분 분리수거 · 교 교통 · 공 공공시설 | 마지막 지도 위치·확대·분류는 자동으로 보관됩니다.</p><section class="section"><h2>이 장소 주변의 생활 공지</h2><div class="notice">현재 확인된 유효한 공지가 없어요. 적용 구역·기간·변경 전후·공식 출처가 확인된 안내를 이곳에 표시합니다.</div><a class="textlink" href="#/notification-settings">이 지역 생활 알림 설정 →</a></section><section class="section"><div class="section-head"><h2>지도에서 찾은 장소</h2><span class="subtle">${visible.length}곳</span></div>${visible.map((x) => `<button class="map-place-row ${p?.id === x.id ? "current" : ""}" onclick="openMapPlace('${x.id}')"><span><b>${esc(x.title)}${p?.id === x.id ? " · 선택됨" : ""}</b><small>${esc(placeMeta[x.id].summary)}</small></span><span class="textlink">지도에서 보기 →</span></button>`).join("") || emptyState("검색 결과가 없어요.", "지역·분류·검색어를 다시 선택해주세요.")}<div class="actions"><a class="btn secondary" href="#/saved/place">저장한 장소·정보 보기</a><a class="textlink" href="#/questions">동네 질문과 후기 보기 →</a></div></section></div>`;
+    return `<div class="container neighborhood-page"><div class="actions map-back"><a class="textlink" href="#/activity">← 내 활동으로 돌아가기</a></div>${pageHead("NEIGHBORHOOD MAP", "우리 동네에 필요한 정보를 지도에서 찾아요.", `${esc(s.region || "옥천 전체")} / ${esc(s.category)}${p ? " / 마지막으로 본 장소: " + esc(p.title) : " / 장소를 선택해 생활 정보를 확인하세요."}`)}<div class="notice warning">현재 지도와 시설 위치는 도식입니다. 실제 카카오맵 연결 전이며, 운영시간·주소·공식 출처가 확인되지 않은 항목은 “확인 필요”로 안내합니다.</div>${invalid ? '<div class="notice warning" role="status">이 장소는 삭제되었거나 현재 표시할 수 없어요. 다른 장소를 찾아보세요.</div>' : ""}<div class="map-search-row"><label>읍·면<select aria-label="지도 지역" ${uiActionAttrs("change", "mapFilter_86", [])}><option value="">옥천 전체</option>${options(regions, s.region)}</select></label><form ${uiActionAttrs("submit", "mapSearch_87", [])} role="search"><input aria-label="장소 이름·분류 검색" name="query" placeholder="분리수거장·시설 이름·분류 검색" value="${esc(s.query)}"><button class="btn small" type="submit">검색</button></form></div><nav class="tabs map-categories" aria-label="시설 분류">${mapCategories.map((c) => `<button class="tab ${s.category === c ? "active" : ""}" aria-pressed="${s.category === c}" ${uiActionAttrs("click", "mapFilter_84", [c])}>${c}</button>`).join("")}</nav><div class="area-layout neighborhood-layout"><div class="map-panel neighborhood-map" id="neighborhood-map" tabindex="0" role="region" aria-label="생활권 도식 지도. 방향키로 이동하고 확대·축소 버튼을 이용하세요.">${mapWorld(s, visible)}<div class="map-tools"><button aria-label="지도 확대" ${uiActionAttrs("click", "mapZoom_88", [])} ${s.zoom >= 2.5 ? "disabled" : ""}>＋</button><button aria-label="지도 축소" ${uiActionAttrs("click", "mapZoom_89", [])} ${s.zoom <= 1 ? "disabled" : ""}>−</button><button class="map-reset" ${uiActionAttrs("click", "mapReset_90", [])}>위치 초기화</button></div><div class="map-pan" aria-label="지도 이동"><button aria-label="지도 위로 이동" ${uiActionAttrs("click", "mapPan_91", [])}>↑</button><span><button aria-label="지도 왼쪽 이동" ${uiActionAttrs("click", "mapPan_92", [])}>←</button><button aria-label="지도 아래로 이동" ${uiActionAttrs("click", "mapPan_93", [])}>↓</button><button aria-label="지도 오른쪽 이동" ${uiActionAttrs("click", "mapPan_94", [])}>→</button></span></div><div class="map-note">도식 지도 · 확대 ${Math.round(s.zoom * 100)}% · 드래그로 이동</div></div><aside class="formbox place-detail" aria-label="선택한 장소 상세 정보" aria-live="polite">${p ? `<span class="badge">${esc(p.category)}</span><h2>${esc(p.title)}</h2><p class="micro">${esc(p.region)} 내 예시 지점</p><dl><dt>상세 주소</dt><dd>운영 자료 확인 후 표시</dd><dt>운영시간</dt><dd>${esc(placeMeta[p.id].hours)}</dd><dt>이용 안내</dt><dd>${esc(placeMeta[p.id].usage)}</dd><dt>출처와 최신 확인</dt><dd>공식 출처: 확인 필요<br>마지막 확인일: 미등록</dd></dl><div class="actions"><a class="btn small" href="https://map.kakao.com/?q=${encodeURIComponent(p.region + " " + p.category)}" target="_blank" rel="noopener">카카오맵 검색·길찾기 ↗</a>${saveButton("place", p.id, p.title, "#/place/" + p.id)}<a class="textlink" href="#/notification-settings">변경 알림 설정</a><a class="textlink" href="#/report/place/${p.id}">정보 수정 제안</a></div>` : emptyState(visible.length ? "장소를 선택해주세요." : "이 조건의 시설이 없어요.", visible.length ? "지도 표시나 아래 목록을 누르면 이용 안내를 볼 수 있어요." : "지역·분류·검색어를 바꿔보세요. 확인되지 않은 시설을 자동으로 추가하지 않아요.")}</aside></div><p class="micro map-legend">분 분리수거 · 교 교통 · 공 공공시설 | 마지막 지도 위치·확대·분류는 자동으로 보관됩니다.</p><section class="section"><h2>이 장소 주변의 생활 공지</h2><div class="notice">현재 확인된 유효한 공지가 없어요. 적용 구역·기간·변경 전후·공식 출처가 확인된 안내를 이곳에 표시합니다.</div><a class="textlink" href="#/notification-settings">이 지역 생활 알림 설정 →</a></section><section class="section"><div class="section-head"><h2>지도에서 찾은 장소</h2><span class="subtle">${visible.length}곳</span></div>${visible.map((x) => `<button class="map-place-row ${p?.id === x.id ? "current" : ""}" ${uiActionAttrs("click", "openMapPlace_85", [x.id])}><span><b>${esc(x.title)}${p?.id === x.id ? " · 선택됨" : ""}</b><small>${esc(placeMeta[x.id].summary)}</small></span><span class="textlink">지도에서 보기 →</span></button>`).join("") || emptyState("검색 결과가 없어요.", "지역·분류·검색어를 다시 선택해주세요.")}<div class="actions"><a class="btn secondary" href="#/saved/place">저장한 장소·정보 보기</a><a class="textlink" href="#/questions">동네 질문과 후기 보기 →</a></div></section></div>`;
   };
 
   /* 앞 단계의 결과를 확장합니다. 전역 함수는 재할당하지 않습니다. */
@@ -1540,7 +1547,7 @@ function notificationsPage(...args) {
         );
     }
     const list = inbox.filter((n) => filter === "전체" || n.category === filter);
-    /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("NOTIFICATIONS", "내게 필요한 소식만 모았어요.", "답변은 해당 질문으로, 공간 변경은 해당 정보로 바로 이어집니다.")}<div class="tabs">${["전체", "방·상담", "질문·답변", "내 생활"].map((t) => `<a class="tab ${filter === t ? "active" : ""}" href="#/notifications/${encodeURIComponent(t)}">${t}</a>`).join("")}</div><div class="activity-content">${list.length ? list.map((n) => `<article class="application"><span class="badge">${n.category} · ${n.read ? "읽음" : "새 소식"}</span><h3>${esc(n.title)}</h3>${n.body ? `<p class="user-copy">${esc(n.body)}</p>` : ""}<p class="micro">${labelDate(n.created)}</p><button class="${n.cta ? "btn small" : "textlink"}" onclick="openNotice('${n.id}')">${esc(n.cta || "내용 보기 →")}</button></article>`).join("") : emptyState("아직 도착한 알림이 없어요.")}<div class="actions"><a class="btn secondary" href="#/notification-settings">알림 종류·시간 설정</a><a class="textlink" href="#/saved">저장한 정보 보기</a></div><p class="micro">알림함은 현재 브라우저에서만 동작합니다. 날짜 알림은 알림함을 열 때 확인하며 외부 문자·이메일은 발송하지 않습니다.</p></div></div>`;
+    /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return `<div class="container">${pageHead("NOTIFICATIONS", "내게 필요한 소식만 모았어요.", "답변은 해당 질문으로, 공간 변경은 해당 정보로 바로 이어집니다.")}<div class="tabs">${["전체", "방·상담", "질문·답변", "내 생활"].map((t) => `<a class="tab ${filter === t ? "active" : ""}" href="#/notifications/${encodeURIComponent(t)}">${t}</a>`).join("")}</div><div class="activity-content">${list.length ? list.map((n) => `<article class="application"><span class="badge">${n.category} · ${n.read ? "읽음" : "새 소식"}</span><h3>${esc(n.title)}</h3>${n.body ? `<p class="user-copy">${esc(n.body)}</p>` : ""}<p class="micro">${labelDate(n.created)}</p><button class="${n.cta ? "btn small" : "textlink"}" ${uiActionAttrs("click", "openNotice_95", [n.id])}>${esc(n.cta || "내용 보기 →")}</button></article>`).join("") : emptyState("아직 도착한 알림이 없어요.")}<div class="actions"><a class="btn secondary" href="#/notification-settings">알림 종류·시간 설정</a><a class="textlink" href="#/saved">저장한 정보 보기</a></div><p class="micro">알림함은 현재 브라우저에서만 동작합니다. 날짜 알림은 알림함을 열 때 확인하며 외부 문자·이메일은 발송하지 않습니다.</p></div></div>`;
   };
 
   /* 앞 단계의 결과를 확장합니다. 전역 함수는 재할당하지 않습니다. */
@@ -1728,7 +1735,7 @@ function caseEvents(kind, id) {
 /* casesPage — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function casesPage(id) {
   const list = id ? cases.filter((x) => x.id === id) : cases;
-  return `<div class="container">${pageHead("CORRECTIONS & REPORTS", "신고·정정 처리 내역", "접수 → 검토 중 → 추가 자료 요청 → 처리 완료. 모든 기록은 현재 브라우저의 체험입니다.")}<div class="activity-content">${list.map((c) => `<article class="formbox"><span class="badge">${esc(c.status)}</span><h3>${esc(c.kind)} · ${esc(c.reason)}</h3><p class="micro">${esc(c.id)} · 대상 ${esc(c.target)}</p><p class="user-copy">${esc(c.body)}</p><h3>처리 결과</h3><p class="user-copy">${esc(c.result || "아직 처리 결과가 없어요.")}</p>${(c.appeals || []).map((a) => `<p class="notice">재검토 요청: ${esc(a.text)}</p>`).join("")}<button class="btn secondary small" onclick="appealCase('${c.id}')">이의제기·재검토 요청</button></article>`).join("") || emptyState("접수한 요청이 없어요.")}<a class="textlink" href="#/life">내 생활로 →</a></div></div>`;
+  return `<div class="container">${pageHead("CORRECTIONS & REPORTS", "신고·정정 처리 내역", "접수 → 검토 중 → 추가 자료 요청 → 처리 완료. 모든 기록은 현재 브라우저의 체험입니다.")}<div class="activity-content">${list.map((c) => `<article class="formbox"><span class="badge">${esc(c.status)}</span><h3>${esc(c.kind)} · ${esc(c.reason)}</h3><p class="micro">${esc(c.id)} · 대상 ${esc(c.target)}</p><p class="user-copy">${esc(c.body)}</p><h3>처리 결과</h3><p class="user-copy">${esc(c.result || "아직 처리 결과가 없어요.")}</p>${(c.appeals || []).map((a) => `<p class="notice">재검토 요청: ${esc(a.text)}</p>`).join("")}<button class="btn secondary small" ${uiActionAttrs("click", "appealCase_96", [c.id])}>이의제기·재검토 요청</button></article>`).join("") || emptyState("접수한 요청이 없어요.")}<a class="textlink" href="#/life">내 생활로 →</a></div></div>`;
 }
 
 /* appealCase — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -1786,10 +1793,10 @@ function communityAdmin() {
       .filter((q) => !q.answers.length || q.helpRequested)
       .map(
         (q) =>
-          `<div class="application"><h3>${esc(q.title)}</h3><p>${esc(scopeLabel(q.scope))} · ${esc(q.status)}</p><a class="btn secondary small" href="#/question/${q.id}">내용 확인·답변</a><button class="textlink" onclick="assignQuestion('${q.id}')">답변 요청 검토</button></div>`,
+          `<div class="application"><h3>${esc(q.title)}</h3><p>${esc(scopeLabel(q.scope))} · ${esc(q.status)}</p><a class="btn secondary small" href="#/question/${q.id}">내용 확인·답변</a><button class="textlink" ${uiActionAttrs("click", "assignQuestion_97", [q.id])}>답변 요청 검토</button></div>`,
       )
       .join("") || emptyState("답변 대기 질문이 없습니다.")
-  }</section><section class="section"><h2>신고 검토</h2>${cases.map((c) => `<div class="application"><h3>${esc(c.reason)}</h3><p>${esc(c.target)} · ${esc(c.status)}</p><button class="btn secondary small" onclick="processCase('${c.id}')">사유·처리 기록</button></div>`).join("") || emptyState("접수된 신고가 없습니다.")}</section><section class="section"><h2>인증 안내 요청</h2>${checks.map((c) => `<div class="application"><h3>${esc(c.kind)}</h3><p>${esc(c.status)}</p><p>${esc(c.body)}</p><p class="micro">실제 검증 절차 연결 전으로 확인 완료 배지를 부여할 수 없습니다.</p></div>`).join("") || emptyState("인증 안내 요청이 없습니다.")}</section></div>`;
+  }</section><section class="section"><h2>신고 검토</h2>${cases.map((c) => `<div class="application"><h3>${esc(c.reason)}</h3><p>${esc(c.target)} · ${esc(c.status)}</p><button class="btn secondary small" ${uiActionAttrs("click", "processCase_98", [c.id])}>사유·처리 기록</button></div>`).join("") || emptyState("접수된 신고가 없습니다.")}</section><section class="section"><h2>인증 안내 요청</h2>${checks.map((c) => `<div class="application"><h3>${esc(c.kind)}</h3><p>${esc(c.status)}</p><p>${esc(c.body)}</p><p class="micro">실제 검증 절차 연결 전으로 확인 완료 배지를 부여할 수 없습니다.</p></div>`).join("") || emptyState("인증 안내 요청이 없습니다.")}</section></div>`;
 }
 
 /* assignQuestion — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -2081,15 +2088,22 @@ function attachDrafts() {
       const preview = f.querySelector(".upload-preview");
       if (f._drawPhotos) f._drawPhotos();
       else if (preview)
-        preview.innerHTML = f._photos
-          .map((s) => `<img src="${s}" alt="임시 저장한 사진">`)
-          .join("");
+        setHTML(preview, f._photos
+          .map((s) => `<img src="${esc(s)}" alt="임시 저장한 사진">`)
+          .join(""));
     }
     const row = document.createElement("div");
     row.className = "draft-row";
-    row.innerHTML =
-      '<button type="button" class="btn secondary small">임시 저장</button><span class="micro">현재 브라우저에서 이어 쓸 수 있어요.</span>';
-    row.querySelector("button").onclick = () => persistDraft(f);
+    const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'btn secondary small';
+    // 보안: 안내 문구는 텍스트로, 동작은 함수로 연결합니다.
+    saveButton.textContent = '임시 저장';
+    saveButton.addEventListener('click', () => persistDraft(f));
+    const message = document.createElement('span');
+    message.className = 'micro';
+    message.textContent = '현재 브라우저에서 이어 쓸 수 있어요.';
+    row.append(saveButton, message);
     f.append(row);
     const submit = f.onsubmit;
     if (submit)

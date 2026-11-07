@@ -105,6 +105,7 @@ function form(sel, values) {
 /* c — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
 const c = {
   document: {
+    addEventListener() {},
     querySelector: node,
     querySelectorAll: () => [],
     getElementById: node,
@@ -140,9 +141,10 @@ c.history = {
   },
 };
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
+c.DOMPurify = require('dompurify')(new (require('jsdom').JSDOM)('').window);
 vm.createContext(c);
 /* 이 구간에서 필요한 설정과 실행 흐름을 준비합니다. */
-for (const file of ["app.js", "flow.js", "router.js"])
+for (const file of ["ui-security.js", "ui-actions.js", "app.js", "flow.js", "router.js"])
   vm.runInContext(fs.readFileSync(require("path").join(__dirname, "../src", file), "utf8"), c);
 /* run — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
 const run = (s) => vm.runInContext(s, c);
