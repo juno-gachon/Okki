@@ -754,6 +754,7 @@ function unavailable() {
 /* registrationSchemas — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
 const registrationSchemas = {
   broker: [
+    /* 중개사무소 정보 입력은 계정 기반 관리 도입 전까지 보류.
     [
       "01",
       "중개사무소와 담당자",
@@ -768,6 +769,7 @@ const registrationSchemas = {
         ["officeEvidence", "사무소 확인 자료·등록 정보 설명", "textarea"],
       ],
     ],
+    */
     [
       "02",
       "매물과 중개 의뢰",
@@ -832,7 +834,7 @@ const registrationSchemas = {
       "현재 거주자와 모집 권한",
       [
         ["name", "이름 또는 별칭"],
-        ["phone", "휴대전화", "tel"],
+        // 전화번호 수집은 보류: ["phone", "휴대전화", "tel"],
         ["residency", "현재 거주 여부·확인 방법"],
         [
           "authority",
@@ -917,11 +919,11 @@ function registrationPage(mode) {
     "정확한 주소와 연락처는 비공개로 접수하며 확인 전에는 안내하지 않습니다.",
     "registration-" + mode,
     registrationSchemas[mode]
-        .map(([n, t, fields]) =>
+        .map(([n, t, fields], index) =>
           box(
-            n,
+            mode === "broker" ? String(index + 1).padStart(2, "0") : n,
             t,
-            `<div class="fields">${fields.map((x) => schemaField(x, d)).join("")}</div>${n === "01" ? verifyUI("phone") : ""}`,
+            `<div class="fields">${fields.map((x) => schemaField(x, d)).join("")}</div>${/* 휴대전화 체험 확인 보류: n === "01" ? verifyUI("phone") : "" */ ""}`,
           ),
         )
         .join("") +
@@ -948,7 +950,8 @@ function registrationEvents(mode) {
   f.onsubmit = (e) => {
     e.preventDefault();
     if (!f.reportValidity()) return;
-    if (!verified(f, "phone")) return errorForm(f, "휴대전화 체험 확인을 완료해주세요.");
+    // 휴대전화 체험 확인은 기능 재개 전까지 보류한다.
+    // if (!verified(f, "phone")) return errorForm(f, "휴대전화 체험 확인을 완료해주세요.");
     if (f._loading || !f._photos.length)
       return errorForm(f, "공간 사진을 한 장 이상 추가해주세요.");
     const d = getData(f);

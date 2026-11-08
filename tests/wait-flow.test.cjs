@@ -192,7 +192,8 @@ let f = form("#wait-form", {
   date: "2026-11-10",
   latestDate: "2026-11-05",
   duration: "6개월",
-  destination: "옥천읍 예시 직장",
+  workRegion: "옥천읍",
+  workVillage: "금구리",
   regions: ["옥천읍"],
   anyRegion: false,
   deposit: "500",
@@ -215,7 +216,7 @@ submit(f);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(c.location.hash, "/wait/2");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert.equal(run("waitDraft.destination"), "옥천읍 예시 직장");
+assert.equal(run("waitDraft.workVillage"), "금구리");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 node("#apply-region").value = "동이면";
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
@@ -224,68 +225,23 @@ run("applyArea()");
 assert.equal(run("waitDraft.regions.join()"), "옥천읍,동이면");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("waitDraft.deposit"), "500");
-// Step 2 must verify selected channels; changes to a contact invalidate verification.
+// Step 2 submits to the web inbox without collecting or verifying contact information.
 
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 f = form("#wait-form", {
-  name: "체험자",
-  phone: "010-0000-0000",
-  email: "test@example.com",
-  channel: "이메일",
-  reply: "문자",
   privacy: true,
   serviceConsent: true,
   settlementConsent: false,
   types: ["원룸"],
   must: "욕실 단독",
   preferences: "햇빛",
-  phoneCode: "",
-  emailCode: "",
 });
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 run("waitEvents('2')");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 submit(f);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert.equal(run("applications.length"), 0);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert(node("#wait-form .form-error").textContent.includes("확인"));
-
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-c.btn = {
-  form: f,
-};
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("sendDemoCode(btn,'phone')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.phoneCode.value = run("verification.phone.code");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("checkDemoCode(btn,'phone')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert(run("verified(btn.form,'phone')"));
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.phone.value = "010-1111-1111";
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert(!run("verified(btn.form,'phone')"));
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.phone.value = "010-0000-0000";
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("sendDemoCode(btn,'email')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.emailCode.value = run("verification.email.code");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("verification.email.until=0;checkDemoCode(btn,'email')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert(!run("verified(btn.form,'email')"));
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("sendDemoCode(btn,'email')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.emailCode.value = run("verification.email.code");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("checkDemoCode(btn,'email')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-submit(f);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
+assert.equal(run("applications[0].data.channel"), "웹 알림함");
+assert.equal(run("applications[0].data.phone"), undefined);
 assert.equal(run("applications.length"), 1);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("applications[0].status"), "대기 중");
@@ -311,7 +267,7 @@ run("demoAlert(wid)");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("alerts.length"), 1);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert(run("alertPage(alerts[0].id)").includes("체험자"));
+assert(run("alertPage(alerts[0].id)").includes("공간"));
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("alerts[0].status"), "확인함");
 /* consultHtml — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
@@ -346,7 +302,7 @@ assert(run("savedConsult.id").startsWith("C-"));
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("applications.find(a=>a.id===wid).status"), "대기 중");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert.equal(run("applications.find(a=>a.id===wid).data.name"), "체험자");
+assert.equal(run("applications.find(a=>a.id===wid).data.name"), undefined);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(run("savedConsult.sourceConditions.date"), "2026-11-10");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
@@ -555,7 +511,7 @@ assert(run("areaPage()").includes(encodeURIComponent("옥천군 옥천역")));
 // User text is escaped in cards/alerts.
 
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("applications.find(a=>a.id===wid).data.destination='<img src=x onerror=alert(1)>'");
+run("applications.find(a=>a.id===wid).data.workVillage='<img src=x onerror=alert(1)>'");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert(!run("activityPage()").includes("<img src=x"));
 

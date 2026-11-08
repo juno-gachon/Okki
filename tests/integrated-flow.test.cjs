@@ -547,18 +547,31 @@ submit(f);
 assert.equal(run("experiences[0].verified"), false);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert(run("reviewCard(experiences[0])").includes("이용자 경험 · 인증 전"));
-// New registrations must pass phone verification and photo requirements.
+// Registration does not require phone verification; photos remain required.
 
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert(run("providePage()").includes("공인중개사 매물 등록하기"));
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert(run("providePage()").includes("함께 살 사람 모집하기"));
+const brokerFormHtml = run("registrationPage('broker')");
+const residentFormHtml = run("registrationPage('resident')");
+const vacancyFormHtml = run("vacancyForm()");
+assert(!brokerFormHtml.includes("중개사무소와 담당자"));
+for (const html of [brokerFormHtml, residentFormHtml, vacancyFormHtml]) {
+  assert(!html.includes("휴대전화 확인 · 체험"));
+  assert(!html.includes('name="phone"'));
+}
+const waitOneHtml = run("waitStepOne({workRegion:'옥천읍',workVillage:'금구리'})");
+const waitTwoHtml = run("waitStepTwo({types:[]})");
+assert(waitOneHtml.includes("근무 위치 읍·면"));
+assert(waitOneHtml.includes("금구리"));
+assert(!waitOneHtml.includes('name="destination"'));
+assert(!waitTwoHtml.includes("고용주 숙소"));
+assert(!waitTwoHtml.includes("소식을 받을 연락처"));
 
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 f = form("#registration-resident", {
   name: "체험자",
-  phone: "010-0000-0000",
-  phoneCode: "",
   type: "하숙",
   meal: "식사 협의",
   title: "함께 살 방",
@@ -573,20 +586,6 @@ run("registrationEvents('resident')");
 f.elements.type.onchange();
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 assert.equal(f.elements.meal.required, true);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-submit(f);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-assert.equal(run("applications.length"), 0);
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-c.btn = {
-  form: f,
-};
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("sendDemoCode(btn,'phone')");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-f.elements.phoneCode.value = run("verification.phone.code");
-/* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
-run("checkDemoCode(btn,'phone')");
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 submit(f);
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */

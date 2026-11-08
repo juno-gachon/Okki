@@ -1,7 +1,6 @@
 # Ignore Markdown documents, except reviewed repository documentation.
 *.[mM][dD]
 !README.md
-/AGENTS.md
 !/docs/security-review.md
 !/docs/database-design.md
 

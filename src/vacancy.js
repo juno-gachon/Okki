@@ -63,7 +63,7 @@ function vacancyForm(id) {
       box(
         "01",
         "누가, 어느 집에서 나가나요?",
-        `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${inputField("휴대전화 * · 비공개", "phone", d.phone, 'required type="tel" pattern="0[0-9-]{8,14}"')}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${verifyUI("phone")}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
+        `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${/* 전화번호 입력 보류: inputField("휴대전화 * · 비공개", "phone", d.phone, 'required type="tel" pattern="0[0-9-]{8,14}"') */ ""}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${/* 휴대전화 체험 확인 보류: verifyUI("phone") */ ""}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
       ) +
       box(
         "02",
@@ -246,7 +246,8 @@ function vacancyEvents(id) {
     e.preventDefault();
     sync();
     if (!f.reportValidity()) return;
-    if (!verified(f, "phone")) return errorForm(f, "휴대전화 체험 확인을 완료해주세요.");
+    // 휴대전화 체험 확인은 기능 재개 전까지 보류한다.
+    // if (!verified(f, "phone")) return errorForm(f, "휴대전화 체험 확인을 완료해주세요.");
     if (f._loading) return errorForm(f, "사진 준비가 끝난 뒤 등록해주세요.");
     const result = vacancySave(getData(f), f._photos, id);
     if (result.error) return errorForm(f, result.error);

@@ -214,7 +214,7 @@ function waitSummary(d) {
     ["입사 예정", d.startUnknown ? "아직 몰라요" : d.startDate || "해당 없음"],
     ["입주 희망", d.date || "미정"],
     ["기다릴 수 있는 날", d.latestDate || "별도 제한 없음"],
-    ["직장·생활권", (d.destination || "미정") + " / " + areaText(d)],
+    ["근무 위치·희망 생활권", ([d.workRegion, d.workVillage].filter(Boolean).join(" ") || "미정") + " / " + areaText(d)],
     ["보증금 상한", d.depositUnknown ? "미정" : money(d.deposit)],
     ["월 고정비 상한", d.budgetUnknown ? "미정" : money(d.budget)],
     ["거주 기간", d.duration || "협의·미정"],
@@ -247,7 +247,7 @@ function waitPage(step) {
     !d.date
   )
     return waitPage("1");
-  return `<div class="container">${pageHead("ROOM NEWS, FOR YOU", "곧 나올 방, 어떤 조건으로 알려드릴까요?", "정해진 것부터 남겨주세요. 아직 맞는 방이 없어도 등록할 수 있어요.")}${demoNotice()}<div class="progress-steps"><span class="${step !== "2" ? "current" : "done"}">01 일정과 조건</span><span class="${step === "2" ? "current" : ""}">02 연락과 알림</span></div><div class="form-layout"><aside class="form-aside"><b>${waitEdit ? "알림 조건 수정" : "방 알림 등록"}</b><p class="subtle">${step === "2" ? "선택 조건을 확인하고<br>소식 받을 방법을 정해요." : "입사일과 이사일이 달라도 괜찮아요.<br>내 일정에 맞춰 알려주세요."}</p><div class="notice">등록 순서에 따른 배정이나<br>입주 확정을 의미하지 않아요.</div><a href="#/area/wait">생활권 살펴보기 →</a></aside><form id="wait-form">${step === "2" ? waitStepTwo(d) : waitStepOne(d)}${formError()}<div class="form-submit">${step === "2" ? `<button class="textlink" type="button" ${uiActionAttrs("click", "saveWaitDraft_27", [])}>← 일정과 조건 수정</button>` : '<a class="textlink" href="#/">← 홈으로</a>'}<button class="btn" type="submit">${step === "2" ? (waitEdit ? "수정한 조건 저장" : "이 조건으로 방 알림 등록") : "연락과 알림 설정으로 →"}</button></div></form></div></div>`;
+  return `<div class="container">${pageHead("ROOM NEWS, FOR YOU", "곧 나올 방, 어떤 조건으로 알려드릴까요?", "정해진 것부터 남겨주세요. 아직 맞는 방이 없어도 등록할 수 있어요.")}${demoNotice()}<div class="progress-steps"><span class="${step !== "2" ? "current" : "done"}">01 일정과 조건</span><span class="${step === "2" ? "current" : ""}">02 조건과 동의</span></div><div class="form-layout"><aside class="form-aside"><b>${waitEdit ? "알림 조건 수정" : "방 알림 등록"}</b><p class="subtle">${step === "2" ? "선택 조건과 동의를 확인해요.<br>방 소식은 웹 알림함에서 확인해요." : "입사일과 이사일이 달라도 괜찮아요.<br>내 일정에 맞춰 알려주세요."}</p><div class="notice">등록 순서에 따른 배정이나<br>입주 확정을 의미하지 않아요.</div><a href="#/area/wait">생활권 살펴보기 →</a></aside><form id="wait-form">${step === "2" ? waitStepTwo(d) : waitStepOne(d)}${formError()}<div class="form-submit">${step === "2" ? `<button class="textlink" type="button" ${uiActionAttrs("click", "saveWaitDraft_27", [])}>← 일정과 조건 수정</button>` : '<a class="textlink" href="#/">← 홈으로</a>'}<button class="btn" type="submit">${step === "2" ? (waitEdit ? "수정한 조건 저장" : "이 조건으로 방 알림 등록") : "조건과 동의 확인으로 →"}</button></div></form></div></div>`;
 }
 
 /* waitStepOne — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -261,7 +261,7 @@ function waitStepOne(d) {
     box(
       "02",
       "직장과 희망 생활권",
-      `<div class="fields">${inputField("직장명 또는 대략적인 근무 위치 *", "destination", d.destination, 'required maxlength="100" placeholder="예: 옥천읍 근처 직장"')}</div><p class="micro">재직 증명은 받지 않습니다. 정확한 주소 대신 근처 읍·면을 적어도 돼요.</p><div class="field"><label>희망 지역 * · 복수 선택</label>${choice("regions", regions, d.regions || [], true)}<label class="check"><input name="anyRegion" type="checkbox" ${d.anyRegion ? "checked" : ""}>옥천 내 무관</label></div><button class="textlink" type="button" ${uiActionAttrs("click", "saveWaitDraft_29", [])}>생활권 살펴보고 돌아오기 →</button>`,
+      `<div class="fields">${selectField("근무 위치 읍·면 *", "workRegion", regions, d.workRegion, true)}${field("근무 위치 리·마을 (선택)", `<input name="workVillage" aria-label="근무 위치 리·마을" list="work-villages" value="${esc(d.workVillage || "")}" maxlength="40" placeholder="리·마을 이름"><datalist id="work-villages">${options((typeof villageCatalog === "undefined" ? [] : villageCatalog[d.workRegion] || []), "")}</datalist>`, true)}</div><p class="micro">직장명이나 상세 주소는 입력하지 않아도 돼요. 리·마을 이름까지 선택하거나 입력할 수 있어요.</p><div class="field"><label>희망 지역 * · 복수 선택</label>${choice("regions", regions, d.regions || [], true)}<label class="check"><input name="anyRegion" type="checkbox" ${d.anyRegion ? "checked" : ""}>옥천 내 무관</label></div><button class="textlink" type="button" ${uiActionAttrs("click", "saveWaitDraft_29", [])}>생활권 살펴보고 돌아오기 →</button>`,
     ) +
     box(
       "03",
@@ -273,7 +273,7 @@ function waitStepOne(d) {
 
 /* waitStepTwo — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
 function waitStepTwo(d) {
-  return `<details class="formbox"><summary>남겨주신 일정과 조건 확인</summary>${waitSummary(d)}</details><details class="formbox"><summary>생활 조건을 더 알려주실래요? <span class="subtle">선택</span></summary><div class="fields extra-conditions">${field("가능한 주거 형태", choice("types", types, d.types || [], true), true)}${selectField("주방 사용", "kitchen", ["무관", "공유 가능", "단독 선호", "단독 필수"], d.kitchen)}${selectField("욕실 사용", "bath", ["무관", "공유 가능", "단독 선호", "단독 필수"], d.bath)}${selectField("이동 수단", "transport", ["아직 모름", "자가용", "대중교통", "도보·자전거"], d.transport)}${inputField("통근 시간 상한 (분)", "commute", d.commute, 'type="number" min="1" max="300"')}${field("반드시 필요한 조건", `<textarea name="must" maxlength="500">${esc(d.must)}</textarea>`, true)}${field("조정 가능한 선호", `<textarea name="preferences" maxlength="500">${esc(d.preferences)}</textarea>`, true)}</div></details>${box("01", "소식을 받을 연락처", `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${inputField("휴대전화 *", "phone", d.phone, 'type="tel" required pattern="0[0-9-]{8,14}" placeholder="010-0000-0000"')}${selectField("방 알림 수단 *", "channel", ["문자", "이메일"], d.channel || "문자", true)}${inputField("이메일 (이메일 알림 선택 시 필수)", "email", d.email, 'type="email"')}${selectField("상담 시 선호 연락 수단 (선택)", "reply", ["문자", "전화", "이메일"], d.reply || "문자")}</div>${verifyUI("phone")}${verifyUI("email")}<p class="micro">휴대전화는 필수 확인해요. 이메일 알림 또는 이메일 상담을 선택하면 이메일도 확인합니다.</p>`)}${box("02", "동의와 등록", `<label class="check"><input name="privacy" type="checkbox" required ${d.privacy ? "checked" : ""}>[필수] 방 알림 등록을 위한 개인정보 수집·이용에 동의해요.</label><button class="textlink" type="button" ${uiActionAttrs("click", "policy_25", [])}>상세 보기 →</button><label class="check"><input name="serviceConsent" type="checkbox" required ${d.serviceConsent ? "checked" : ""}>[필수] 조건에 맞는 방 소식을 받는 데 동의해요.</label><label class="check"><input name="settlementConsent" type="checkbox" ${d.settlementConsent ? "checked" : ""}>[선택] 정착·첫 1년 할 일 안내도 받을게요.</label><p class="micro">제3자에게 연락처를 전달하는 동의는 포함하지 않습니다. 중개사·집주인에게 전달할 때 받는 곳, 항목, 목적, 보유 기간을 안내하고 별도로 동의받아요.</p>`)} `;
+  return `<details class="formbox"><summary>남겨주신 일정과 조건 확인</summary>${waitSummary(d)}</details><details class="formbox"><summary>생활 조건을 더 알려주실래요? <span class="subtle">선택</span></summary><div class="fields extra-conditions">${field("가능한 주거 형태", choice("types", types.filter((type) => type !== "고용주 숙소"), (d.types || []).filter((type) => type !== "고용주 숙소"), true), true)}${selectField("주방 사용", "kitchen", ["무관", "공유 가능", "단독 선호", "단독 필수"], d.kitchen)}${selectField("욕실 사용", "bath", ["무관", "공유 가능", "단독 선호", "단독 필수"], d.bath)}${selectField("이동 수단", "transport", ["아직 모름", "자가용", "대중교통", "도보·자전거"], d.transport)}${inputField("통근 시간 상한 (분)", "commute", d.commute, 'type="number" min="1" max="300"')}${field("반드시 필요한 조건", `<textarea name="must" maxlength="500">${esc(d.must)}</textarea>`, true)}${field("조정 가능한 선호", `<textarea name="preferences" maxlength="500">${esc(d.preferences)}</textarea>`, true)}</div></details>${/* 연락처·체험 인증은 현재 보류. 재개 시 세션·동의·검증 정책을 먼저 확인한다. ${box("01", "소식을 받을 연락처", `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${inputField("휴대전화 *", "phone", d.phone, 'type="tel" required pattern="0[0-9-]{8,14}" placeholder="010-0000-0000"')}${selectField("방 알림 수단 *", "channel", ["문자", "이메일"], d.channel || "문자", true)}${inputField("이메일 (이메일 알림 선택 시 필수)", "email", d.email, 'type="email"')}${selectField("상담 시 선호 연락 수단 (선택)", "reply", ["문자", "전화", "이메일"], d.reply || "문자")}</div>${verifyUI("phone")}${verifyUI("email")}<p class="micro">휴대전화는 필수 확인해요. 이메일 알림 또는 이메일 상담을 선택하면 이메일도 확인합니다.</p>`)} */ ""}${box("02", "동의와 등록", `<label class="check"><input name="privacy" type="checkbox" required ${d.privacy ? "checked" : ""}>[필수] 방 알림 등록을 위한 개인정보 수집·이용에 동의해요.</label><button class="textlink" type="button" ${uiActionAttrs("click", "policy_25", [])}>상세 보기 →</button><label class="check"><input name="serviceConsent" type="checkbox" required ${d.serviceConsent ? "checked" : ""}>[필수] 조건에 맞는 방 소식을 받는 데 동의해요.</label><label class="check"><input name="settlementConsent" type="checkbox" ${d.settlementConsent ? "checked" : ""}>[선택] 정착·첫 1년 할 일 안내도 받을게요.</label><p class="micro">제3자에게 연락처를 전달하는 동의는 포함하지 않습니다. 중개사·집주인에게 전달할 때 받는 곳, 항목, 목적, 보유 기간을 안내하고 별도로 동의받아요.</p>`)} `;
 }
 
 /* verifyUI — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -346,6 +346,8 @@ function saveWaitDraft() {
     if (f.elements[n]) d[n] = f.elements[n].checked;
   for (const n of ["phoneCode", "emailCode"]) delete d[n];
   waitDraft = { ...waitDraft, ...d };
+  // 이전 체험 초안의 연락처와 직장명은 더 이상 저장하지 않는다.
+  for (const key of ["destination", "name", "phone", "email", "reply", "verifiedPhone", "verifiedEmail", "phoneCode", "emailCode"]) delete waitDraft[key];
   save("wait-draft", waitDraft);
 }
 
@@ -359,10 +361,9 @@ function waitEvents(step) {
   const f = $("#wait-form");
   /* 조건이 충족되지 않거나 별도 처리가 필요한 경우를 먼저 확인합니다. */ if (!f) return;
   const sync = () => {
-    if (step === "2") {
-      const email = f.elements.channel.value === "이메일" || f.elements.reply.value === "이메일";
-      f.elements.email.required = email;
-      f.querySelector('[data-verify="email"]').hidden = !email;
+    if (step === "1" && f.elements.workRegion && f.elements.workVillage) {
+      const list = f.querySelector("#work-villages");
+      if (list) setHTML(list, options((typeof villageCatalog === "undefined" ? [] : villageCatalog[f.elements.workRegion.value] || []), ""));
     }
   };
   sync();
@@ -370,7 +371,8 @@ function waitEvents(step) {
     sync();
     saveWaitDraft();
   });
-  f.addEventListener("change", () => {
+  f.addEventListener("change", (event) => {
+    if (step === "1" && event.target?.name === "workRegion" && f.elements.workVillage) f.elements.workVillage.value = "";
     sync();
     saveWaitDraft();
   });
@@ -387,18 +389,19 @@ function waitEvents(step) {
       location.hash = "/wait/2";
       return;
     }
-    if (!verified(f, "phone") || (f.elements.email.required && !verified(f, "email")))
-      return errorForm(f, "휴대전화와 선택한 이메일 연락처의 체험 확인을 완료해주세요.");
+    // 연락처 체험 인증은 기능 재개 전까지 보류한다.
+    // if (!verified(f, "phone") || (f.elements.email.required && !verified(f, "email")))
+    //   return errorForm(f, "휴대전화와 선택한 이메일 연락처의 체험 확인을 완료해주세요.");
     if (f.submitting) return;
     f.submitting = true;
     const old = applications.find((a) => a.id === waitEdit && a.kind === "waiting");
+    const { destination, name, phone, email, reply, verifiedPhone, verifiedEmail, ...conditions } = d;
     const data = {
-      ...d,
+      ...conditions,
       region: d.anyRegion ? "" : d.regions.join(", "),
       deposit: d.depositUnknown ? "" : d.deposit,
       budget: d.budgetUnknown ? "" : d.budget,
-      verifiedPhone: d.phone,
-      verifiedEmail: verified(f, "email") ? d.email : null,
+      channel: "웹 알림함",
     };
     const a = {
       ...old,
@@ -429,7 +432,7 @@ function waitEvents(step) {
 function waitComplete(id) {
   const a = applications.find((a) => a.id === id && a.kind === "waiting");
   /* 조건이 충족되지 않거나 별도 처리가 필요한 경우를 먼저 확인합니다. */ if (!a) return notFound();
-  return `<div class="container"><div class="result"><div class="result-title"><div class="success">✓</div><h1>조건을 잘 남겨주셨어요.</h1><p>곧 나올 방의 정보를 확인하고, 조건이 맞으면 알려드릴게요.</p></div><div class="notice">지금은 기다리는 단계예요. 바로 매물을 추천하거나 입주를 확정하지 않습니다.</div><div class="summary"><span class="badge">${a.status}</span><h3>내 방 알림 · ${esc(a.id)}</h3>${waitSummary(a.data)}<p class="subtle">등록일 ${labelDate(a.created)} · ${esc(a.data.channel)} / ${esc(a.data.channel === "이메일" ? a.data.email : maskPhone(a.data.phone))}</p></div><div class="actions"><a class="btn" href="#/activity">내 방 알림 확인하기 →</a><button class="btn secondary" ${uiActionAttrs("click", "editWaiting_32", [a.id])}>등록 조건 수정</button></div><p class="micro">입주가 급하면 내 활동에서 ‘급한 상황 도움 요청’을 남길 수 있어요.</p><div class="two-grid"><a class="soft-card" href="#/tasks"><h3>기다리는 동안 첫 1년 준비</h3><span class="textlink">내 할 일 →</span></a><a class="soft-card" href="#/community/welcome"><h3>새 이웃에게 먼저 인사해요</h3><span class="textlink">새로 왔어요 →</span></a></div></div></div>`;
+  return `<div class="container"><div class="result"><div class="result-title"><div class="success">✓</div><h1>조건을 잘 남겨주셨어요.</h1><p>곧 나올 방의 정보를 확인하고, 조건이 맞으면 알려드릴게요.</p></div><div class="notice">지금은 기다리는 단계예요. 바로 매물을 추천하거나 입주를 확정하지 않습니다.</div><div class="summary"><span class="badge">${a.status}</span><h3>내 방 알림 · ${esc(a.id)}</h3>${waitSummary(a.data)}<p class="subtle">등록일 ${labelDate(a.created)} · 웹 알림함</p></div><div class="actions"><a class="btn" href="#/activity">내 방 알림 확인하기 →</a><button class="btn secondary" ${uiActionAttrs("click", "editWaiting_32", [a.id])}>등록 조건 수정</button></div><p class="micro">입주가 급하면 내 활동에서 ‘급한 상황 도움 요청’을 남길 수 있어요.</p><div class="two-grid"><a class="soft-card" href="#/tasks"><h3>기다리는 동안 첫 1년 준비</h3><span class="textlink">내 할 일 →</span></a><a class="soft-card" href="#/community/welcome"><h3>새 이웃에게 먼저 인사해요</h3><span class="textlink">새로 왔어요 →</span></a></div></div></div>`;
 }
 
 /* editWaiting — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -496,7 +499,7 @@ function waitCard(a) {
   const ns = alerts.filter((n) => n.waitId === a.id),
     paused = a.status === "일시 중단",
     done = a.status === "집 구함";
-  return `<section class="formbox wait-card"><div class="application-top"><div><span class="subtle">${esc(a.id)} · ${labelDate(a.created)} 등록</span><h2>내가 기다리는 방</h2></div><span class="badge ${paused || done ? "orange" : ""}">${esc(a.status)}</span></div>${waitSummary(a.data)}<p class="subtle">알림 수단: ${esc(a.data.channel)} · ${esc(a.data.channel === "이메일" ? a.data.email : maskPhone(a.data.phone))}</p><div class="actions"><button class="btn secondary small" ${uiActionAttrs("click", "editWaiting_32", [a.id])}>조건 수정</button>${!done ? `<button class="btn small" ${uiActionAttrs("click", "waitingAction_34", [a.id])}>집을 구했어요</button><button class="textlink" ${uiActionAttrs("click", "waitingAction_35", [a.id, paused ? "대기 중" : "일시 중단"])}>${paused ? "알림 다시 받기" : "알림 잠시 중단"}</button>` : ""}<button class="textlink" ${uiActionAttrs("click", "waitPreferences_38", [a.id])}>알림 동의 설정</button><button class="textlink danger" ${uiActionAttrs("click", "waitingAction_39", [a.id])}>등록 삭제</button></div></section>${done || paused ? `<div class="notice">${done ? "집을 구하셨군요! 방 알림을 종료했어요." : "방 알림을 잠시 멈췄어요. 등록 조건은 유지됩니다."} 기존 공간 상담은 별도로 유지됩니다. <a class="textlink" href="#/tasks">첫 1년 할 일 →</a></div>` : ""}${ns.length ? `<div class="section-head"><h2>도착한 방 소식</h2><span class="subtle">${ns.length}건 · 변경·마감 기록 포함</span></div>${ns.map(alertCard).join("")}` : `<div class="waiting-empty"><span class="waiting-orbit">⌂</span><h2>아직 조건에 맞는 방 소식이 없어요.</h2><p>안내 가능한 정보가 확인되면 조건을 비교해요.<br>기다리는 동안 등록한 조건을 바꿀 수 있어요.</p><span class="badge">등록 조건 유지 중</span></div>`}${!done ? `<details class="formbox"><summary>입주가 급한가요? 급한 상황 도움 요청</summary><p class="subtle">등록한 조건과 함께 체험 요청을 보관합니다. 연결 시점이나 거처 확보를 보장하지 않아요.</p><form ${uiActionAttrs("submit", "urgentHelp_36", [a.id])}><textarea name="message" aria-label="급한 상황 설명" required maxlength="1000" placeholder="입주가 필요한 날짜와 급한 상황을 알려주세요."></textarea><button class="btn small" style="margin-top:12px">도움 요청 남기기</button></form>${(a.urgent || []).map((u) => `<p class="subtle">${labelDate(u.time)} · ${esc(u.message)}</p>`).join("")}</details>` : ""}<div class="two-grid section"><a class="soft-card" href="#/tasks"><h3>기다리는 동안 준비해요</h3><span class="textlink">첫 1년 할 일 →</span></a><a class="soft-card" href="#/area"><h3>내가 살 동네를 알아가요</h3><span class="textlink">생활권 지도 →</span></a></div>${!ns.length && !paused && !done ? `<details class="demo-lab"><summary>예시 알림 화면 체험</summary><p>실제 확인된 방이 아닌 가상 원룸으로 알림·상담 흐름을 미리 볼 수 있어요. 내 조건과 맞지 않는 부분은 따로 표시됩니다.</p><button class="btn secondary small" ${uiActionAttrs("click", "demoAlert_37", [a.id])}>가상 방 알림 추가</button></details>` : ""}`;
+  return `<section class="formbox wait-card"><div class="application-top"><div><span class="subtle">${esc(a.id)} · ${labelDate(a.created)} 등록</span><h2>내가 기다리는 방</h2></div><span class="badge ${paused || done ? "orange" : ""}">${esc(a.status)}</span></div>${waitSummary(a.data)}<p class="subtle">알림 수단: 웹 알림함</p><div class="actions"><button class="btn secondary small" ${uiActionAttrs("click", "editWaiting_32", [a.id])}>조건 수정</button>${!done ? `<button class="btn small" ${uiActionAttrs("click", "waitingAction_34", [a.id])}>집을 구했어요</button><button class="textlink" ${uiActionAttrs("click", "waitingAction_35", [a.id, paused ? "대기 중" : "일시 중단"])}>${paused ? "알림 다시 받기" : "알림 잠시 중단"}</button>` : ""}<button class="textlink" ${uiActionAttrs("click", "waitPreferences_38", [a.id])}>알림 동의 설정</button><button class="textlink danger" ${uiActionAttrs("click", "waitingAction_39", [a.id])}>등록 삭제</button></div></section>${done || paused ? `<div class="notice">${done ? "집을 구하셨군요! 방 알림을 종료했어요." : "방 알림을 잠시 멈췄어요. 등록 조건은 유지됩니다."} 기존 공간 상담은 별도로 유지됩니다. <a class="textlink" href="#/tasks">첫 1년 할 일 →</a></div>` : ""}${ns.length ? `<div class="section-head"><h2>도착한 방 소식</h2><span class="subtle">${ns.length}건 · 변경·마감 기록 포함</span></div>${ns.map(alertCard).join("")}` : `<div class="waiting-empty"><span class="waiting-orbit">⌂</span><h2>아직 조건에 맞는 방 소식이 없어요.</h2><p>안내 가능한 정보가 확인되면 조건을 비교해요.<br>기다리는 동안 등록한 조건을 바꿀 수 있어요.</p><span class="badge">등록 조건 유지 중</span></div>`}${!done ? `<details class="formbox"><summary>입주가 급한가요? 급한 상황 도움 요청</summary><p class="subtle">등록한 조건과 함께 체험 요청을 보관합니다. 연결 시점이나 거처 확보를 보장하지 않아요.</p><form ${uiActionAttrs("submit", "urgentHelp_36", [a.id])}><textarea name="message" aria-label="급한 상황 설명" required maxlength="1000" placeholder="입주가 필요한 날짜와 급한 상황을 알려주세요."></textarea><button class="btn small" style="margin-top:12px">도움 요청 남기기</button></form>${(a.urgent || []).map((u) => `<p class="subtle">${labelDate(u.time)} · ${esc(u.message)}</p>`).join("")}</details>` : ""}<div class="two-grid section"><a class="soft-card" href="#/tasks"><h3>기다리는 동안 준비해요</h3><span class="textlink">첫 1년 할 일 →</span></a><a class="soft-card" href="#/area"><h3>내가 살 동네를 알아가요</h3><span class="textlink">생활권 지도 →</span></a></div>${!ns.length && !paused && !done ? `<details class="demo-lab"><summary>예시 알림 화면 체험</summary><p>실제 확인된 방이 아닌 가상 원룸으로 알림·상담 흐름을 미리 볼 수 있어요. 내 조건과 맞지 않는 부분은 따로 표시됩니다.</p><button class="btn secondary small" ${uiActionAttrs("click", "demoAlert_37", [a.id])}>가상 방 알림 추가</button></details>` : ""}`;
 }
 
 /* waitingAction — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -1342,7 +1345,7 @@ function adminPage() {
     .map(([t, n]) => `<div class="summary"><span>${t}</span><h2>${n}</h2></div>`)
     .join(
       "",
-    )}</div><section class="section"><h2>대기 등록</h2>${waits.map((a) => `<details class="formbox"><summary>${esc(a.id)} · ${esc(a.status)} · ${esc(a.data.name)}</summary>${waitSummary(a.data)}<p>알림 수단: ${esc(a.data.channel)} · ${esc(a.data.channel === "이메일" ? a.data.email : maskPhone(a.data.phone))}</p>${(a.urgent || []).map((u) => `<div class="notice warning">급한 상황: ${esc(u.message)}</div>`).join("")}</details>`).join("") || '<div class="notice">대기 등록이 없습니다.</div>'}</section><section class="section"><h2>제보 확인 · 안내 준비</h2>${tips.map((a) => `<article class="formbox"><div class="application-top"><h3>${esc(a.data.region)} · ${esc(a.data.type)} · ${esc(a.id)}</h3><span class="badge">${esc(a.status)}</span></div><p>역할: ${esc(a.data.role)} / 비공개 주소: ${esc(a.data.address)} ${esc(a.data.unit || "")}</p><p class="micro">허용한 연락 범위: ${esc(a.data.nextContact || a.data.contactTime || "미확인")} / 퇴거 정보 전달 ${a.data.forwardPermission ? "허용" : "미동의·별도 확인"}</p><div class="actions"><button class="btn secondary small" ${uiActionAttrs("click", "reviewTip_56", [a.id])}>의사·권한·조건 확인</button><button class="btn small" ${uiActionAttrs("click", "prepareAlert_57", [a.id])} ${a.status !== "안내 가능" ? "disabled" : ""}>조건 비교·알림 준비</button><button class="textlink" ${uiActionAttrs("click", "showHistory_23", [a.id])}>확인 이력</button></div></article>`).join("") || '<div class="notice">접수한 제보가 없습니다.</div>'}</section><section class="section"><h2>알림과 응답 기록</h2>${alerts.map((n) => `<div class="application"><b>${esc(n.snapshot.name)}</b><p>${esc(n.id)} → ${esc(n.waitId)} · ${esc(n.status)}</p><p class="micro">${labelDate(n.created)} · 브라우저 안 알림 저장 성공 / 외부 발송 없음${n.readAt ? " · 읽음" : ""}${n.skipReason ? " · 건너뛴 이유: " + esc(n.skipReason) : ""}</p><button class="textlink" ${uiActionAttrs("click", "changeAlert_58", [n.id])}>정보 변경·마감</button></div>`).join("") || '<div class="notice">안내 기록이 없습니다.</div>'}</section><section class="section"><h2>커뮤니티 신고</h2>${reports.map((r) => `<article class="application"><b>${esc(r.reason)}</b><p>${esc(r.detail)}</p><span class="badge">${esc(r.status)}</span>${r.status === "접수" ? `<button class="textlink" ${uiActionAttrs("click", "resolveReport_59", [r.id])}>신고 확인·처리</button>` : ""}</article>`).join("") || '<div class="notice">신고 기록이 없습니다.</div>'}</section></div>`;
+    )}</div><section class="section"><h2>대기 등록</h2>${waits.map((a) => `<details class="formbox"><summary>${esc(a.id)} · ${esc(a.status)} · 신청</summary>${waitSummary(a.data)}<p>알림 수단: 웹 알림함</p>${(a.urgent || []).map((u) => `<div class="notice warning">급한 상황: ${esc(u.message)}</div>`).join("")}</details>`).join("") || '<div class="notice">대기 등록이 없습니다.</div>'}</section><section class="section"><h2>제보 확인 · 안내 준비</h2>${tips.map((a) => `<article class="formbox"><div class="application-top"><h3>${esc(a.data.region)} · ${esc(a.data.type)} · ${esc(a.id)}</h3><span class="badge">${esc(a.status)}</span></div><p>역할: ${esc(a.data.role)} / 비공개 주소: ${esc(a.data.address)} ${esc(a.data.unit || "")}</p><p class="micro">허용한 연락 범위: ${esc(a.data.nextContact || a.data.contactTime || "미확인")} / 퇴거 정보 전달 ${a.data.forwardPermission ? "허용" : "미동의·별도 확인"}</p><div class="actions"><button class="btn secondary small" ${uiActionAttrs("click", "reviewTip_56", [a.id])}>의사·권한·조건 확인</button><button class="btn small" ${uiActionAttrs("click", "prepareAlert_57", [a.id])} ${a.status !== "안내 가능" ? "disabled" : ""}>조건 비교·알림 준비</button><button class="textlink" ${uiActionAttrs("click", "showHistory_23", [a.id])}>확인 이력</button></div></article>`).join("") || '<div class="notice">접수한 제보가 없습니다.</div>'}</section><section class="section"><h2>알림과 응답 기록</h2>${alerts.map((n) => `<div class="application"><b>${esc(n.snapshot.name)}</b><p>${esc(n.id)} → ${esc(n.waitId)} · ${esc(n.status)}</p><p class="micro">${labelDate(n.created)} · 브라우저 안 알림 저장 성공 / 외부 발송 없음${n.readAt ? " · 읽음" : ""}${n.skipReason ? " · 건너뛴 이유: " + esc(n.skipReason) : ""}</p><button class="textlink" ${uiActionAttrs("click", "changeAlert_58", [n.id])}>정보 변경·마감</button></div>`).join("") || '<div class="notice">안내 기록이 없습니다.</div>'}</section><section class="section"><h2>커뮤니티 신고</h2>${reports.map((r) => `<article class="application"><b>${esc(r.reason)}</b><p>${esc(r.detail)}</p><span class="badge">${esc(r.status)}</span>${r.status === "접수" ? `<button class="textlink" ${uiActionAttrs("click", "resolveReport_59", [r.id])}>신고 확인·처리</button>` : ""}</article>`).join("") || '<div class="notice">신고 기록이 없습니다.</div>'}</section></div>`;
 }
 
 /* reviewTip — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -1450,7 +1453,7 @@ function confirmSend(tipId, waitId) {
     h = tipSnapshot(a),
     c = compareConditions(w.data, h);
   modal(
-    `<h2>알림을 저장하기 전 확인</h2><p>${esc(w.id)} · ${esc(w.data.channel)} · ${esc(w.data.channel === "이메일" ? w.data.email : maskPhone(w.data.phone))}</p>${comparisonHTML(c)}<form id="send-alert"><label class="check"><input type="checkbox" required>최신 입주일·비용·임대 의사·안내 권한을 다시 확인했어요.</label><label class="check"><input type="checkbox" required>수신 채널과 동의, 비공개 정보 제외를 확인했어요.</label>${c.unknown.length ? '<label class="check"><input type="checkbox" required>미확인 조건을 충족으로 판단하지 않고 추가 확인으로 안내해요.</label>' : ""}<p class="micro">현재 브라우저에만 예시 알림을 저장하며 실제 문자·이메일은 발송하지 않습니다.</p><button class="btn">체험 알림 저장</button></form>`,
+    `<h2>알림을 저장하기 전 확인</h2><p>${esc(w.id)} · 웹 알림함</p>${comparisonHTML(c)}<form id="send-alert"><label class="check"><input type="checkbox" required>최신 입주일·비용·임대 의사·안내 권한을 다시 확인했어요.</label><label class="check"><input type="checkbox" required>수신 채널과 동의, 비공개 정보 제외를 확인했어요.</label>${c.unknown.length ? '<label class="check"><input type="checkbox" required>미확인 조건을 충족으로 판단하지 않고 추가 확인으로 안내해요.</label>' : ""}<p class="micro">현재 브라우저에만 예시 알림을 저장하며 실제 문자·이메일은 발송하지 않습니다.</p><button class="btn">체험 알림 저장</button></form>`,
   );
   $("#send-alert").onsubmit = (e) => {
     e.preventDefault();
