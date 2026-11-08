@@ -1,8 +1,9 @@
 # Ignore Markdown documents, except reviewed repository documentation.
 *.[mM][dD]
 !README.md
-!AGENTS.md
+/AGENTS.md
 !/docs/security-review.md
+!/docs/database-design.md
 
 # Environment files, including local overrides, examples, and backups.
 .env
