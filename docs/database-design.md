@@ -1,6 +1,6 @@
 # 옥키 DB·통신·접근 권한 상세설계
 
-기준일: 2026-11-08 KST. 문서 상태: **설계 작성, DB 미적용**.
+기준일: 2026-11-08 KST. 문서 상태: **개발 DB 접수 범위 적용·실연동 검증 완료, 운영 배포 미실시**.
 
 이 문서는 방 알림 신청, 중개사 매물, 퇴거 예정, 공동거주 모집의 저장·조회·사진·매칭 연결 기준이다. 사용자 결정과 구현 제안을 구분한다. 실제 schema의 증거는 migration과 대상 환경의 검증 결과다. 이 문서 작성만으로 테이블·RPC·Storage·권한이 생성된 것은 아니다.
 
@@ -717,3 +717,173 @@ RLS·grants:
 - [PostgreSQL 제약조건](https://www.postgresql.org/docs/current/ddl-constraints.html)
 
 라이브러리 API·요금·설정은 구현 시 최신 공식 문서와 실제 환경에서 재확인한다. 이 문서의 링크는 특정 원격 설정을 검증했다는 의미가 아니다.
+
+## 14. 네 폼 저장 구현과 적용 상태 — 2026-11-08
+
+상태: 개발 프로젝트에 migration 적용·실연동 검증 완료. 기존 4장 필드 사전은 전체 목표 설계이며, 이번 단계에서 실제 생성할 테이블/열은 아래와 migration을 기준으로 구분한다. 브라우저의 업무 localStorage 경로와 분리하여 lib/server/intake-handler.mjs 및 src/intake.js를 추가했다. 전화 인증·SOLAPI·입주 후 거주 조사는 포함하지 않는다.
+
+### 실제 적용할 스키마
+
+이번 접수 단계는 11개 테이블이다. 공통 방 조건을 폼의 표현에서 잘못 추론하지 않도록 현재 폼의 의미/단위를 그대로 타입 열에 보존한다. 예를 들어 waiting의 budget은 월 고정비 상한이고 vacancy의 rent는 현재 계약 금액이다. 초기 canonical 필드명으로의 변환과 매칭 규칙 연결은 별도 migration으로 한다. 자유서술 전체 폼 JSON을 업무 행에 복제하지 않는다. 서버 검증 후 RPC에 전달하는 JSON은 typed record 입력 수단이다.
+
+- seekers: id,created_at,updated_at,version,auth_user_id UNIQUE/FK Auth CASCADE.
+- providers: 같은 공통 열+auth_user_id,type(broker/tenant),account_status(pending/approved/suspended),UNIQUE(auth_user_id,type). 접수는 pending으로 가능하나 자격 확인/매칭 공개를 의미하지 않는다. 소유자 직접 공동거주 접수는 현재 API에서 거부한다.
+- housing_requests: 공통 열+seeker_id UNIQUE/FK CASCADE,owner_user_id FK Auth CASCADE,status,delete_after(최초 90일). 아래 waiting 필드를 가진다. 수정 시 created_at/기존 만료일을 보존하고 version만 증가시킨다.
+- listings: 공통 열+owner_user_id FK Auth CASCADE,provider_id FK RESTRICT,kind(broker/resident/vacancy),review_status(not_required 또는 received),lifecycle_status,delete_after(90일). 일반 신청자에 공개되지 않는다.
+- broker_listing_details/shared_housing_details/vacancy_report_details: listing_id PK/FK listings CASCADE+아래 해당 폼의 타입 열. 사무소 정보는 이번 접수별 상세에 보존하고 제공자 계정의 사무소 마스터로 자동 승격하지 않는다.
+- applicant_contacts: id,request/listing 중 정확히 하나의 UNIQUE FK CASCADE,phone_e164(형식 CHECK,번호 UNIQUE 아님),verification_status=unverified,usage_scope=operator_only,collection_consent_id FK CASCADE.
+- consents: id,owner_user_id,request/listing 중 하나,purpose(intake/optional),policy_version,accepted_at,attested_truth,attested_updates. FK는 CASCADE. 변경 시 번호/주소 원문을 동의 이력에 복제하지 않는다.
+- listing_media: id,owner_user_id,listing_id(nullable FK CASCADE),object_path UNIQUE,status(uploading/ready/deleting),byte_size(1~1MB),created_at,expires_at(미완료 24시간). 비공개 listing-photos 버킷에 서버 재인코딩 WebP를 저장한다.
+- idempotency_records: (owner_user_id,operation,key UUID) PK,request_hash,result(신청 ID/kind/version만),created_at. 전화/주소 원문 없음. 신청 삭제 시 관련 결과도 삭제한다.
+
+모든 테이블 RLS 활성화, anon/authenticated 테이블 접근 및 RPC 실행 금지. 서비스 역할에만 최소 CRUD/RPC grants. save_intake/reserve_intake_media/delete_intake는 SECURITY INVOKER·고정 search_path. 서버는 getUser 검증 UUID만 actor로 전달하고, RPC도 소유권/version/멱등 키/행 수/사진 소유권을 검사한다. 외부 Storage 호출은 transaction 밖이다. 사진 업로드 예약이 실패/중단되면 객체 경로를 남겨 정리 작업이 복구한다. 신규/수정별 시간당 30건, 미연결/시간당 사진 예약 합계 20건, 신청당 최대 5장의 제한을 적용한다. 구체 제약·인덱스는 migration SQL을 확인한다.
+
+### broker 입력 → 타입 열
+
+| 폼 입력 | SQL 열 | 저장 타입 | 서버 입력 조건 |
+| --- | --- | --- | --- |
+| office | office | text | 필수(미정 허용 항목은 NULL) |
+| officeNumber | office_number | text | 필수(미정 허용 항목은 NULL) |
+| representative | representative | text | 필수(미정 허용 항목은 NULL) |
+| name | name | text | 필수(미정 허용 항목은 NULL) |
+| officeAddress | office_address | text | 필수(미정 허용 항목은 NULL) |
+| officeEvidence | office_evidence | text | 필수(미정 허용 항목은 NULL) |
+| title | title | text | 필수(미정 허용 항목은 NULL) |
+| type | type | text | 필수(미정 허용 항목은 NULL) |
+| building | building | text | 필수(미정 허용 항목은 NULL) |
+| region | region | text | 필수(미정 허용 항목은 NULL) |
+| address | address | text | 필수(미정 허용 항목은 NULL) |
+| area | area | text | 필수(미정 허용 항목은 NULL) |
+| floor | floor | text | 필수(미정 허용 항목은 NULL) |
+| roomsBaths | rooms_baths | text | 필수(미정 허용 항목은 NULL) |
+| direction | direction | text | 필수(미정 허용 항목은 NULL) |
+| approved | approved | date | 필수(미정 허용 항목은 NULL) |
+| parking | parking | text | 필수(미정 허용 항목은 NULL) |
+| authority | authority | text | 필수(미정 허용 항목은 NULL) |
+| authorityEvidence | authority_evidence | text | 필수(미정 허용 항목은 NULL) |
+| transaction | transaction | text | 필수(미정 허용 항목은 NULL) |
+| deposit | deposit | integer | 필수(미정 허용 항목은 NULL) |
+| rent | rent | integer | 필수(미정 허용 항목은 NULL) |
+| fee | fee | integer | 필수(미정 허용 항목은 NULL) |
+| feeItems | fee_items | text | 필수(미정 허용 항목은 NULL) |
+| feeBasis | fee_basis | text | 필수(미정 허용 항목은 NULL) |
+| utilities | utilities | text | 필수(미정 허용 항목은 NULL) |
+| min | min | integer | 필수(미정 허용 항목은 NULL) |
+| max | max | integer | 선택 동의 시만 저장 |
+| commission | commission | text | 필수(미정 허용 항목은 NULL) |
+| condition | condition | text | 필수(미정 허용 항목은 NULL) |
+| date | date | date | 필수(미정 허용 항목은 NULL) |
+| repairDate | repair_date | date | 선택 동의 시만 저장 |
+| facilities | facilities | text | 필수(미정 허용 항목은 NULL) |
+| kitchen | kitchen | text | 필수(미정 허용 항목은 NULL) |
+| bath | bath | text | 필수(미정 허용 항목은 NULL) |
+| rules | rules | text | 필수(미정 허용 항목은 NULL) |
+| inspection | inspection | text | 필수(미정 허용 항목은 NULL) |
+| publicScope | public_scope | text | 필수(미정 허용 항목은 NULL) |
+| contactTime | contact_time | text | 필수(미정 허용 항목은 NULL) |
+
+### resident 입력 → 타입 열
+
+| 폼 입력 | SQL 열 | 저장 타입 | 서버 입력 조건 |
+| --- | --- | --- | --- |
+| name | name | text | 선택 동의 시만 저장 |
+| residency | residency | text | 필수(미정 허용 항목은 NULL) |
+| authority | authority | text | 필수(미정 허용 항목은 NULL) |
+| authorityEvidence | authority_evidence | text | 필수(미정 허용 항목은 NULL) |
+| type | type | text | 필수(미정 허용 항목은 NULL) |
+| title | title | text | 필수(미정 허용 항목은 NULL) |
+| region | region | text | 필수(미정 허용 항목은 NULL) |
+| address | address | text | 필수(미정 허용 항목은 NULL) |
+| currentPeople | current_people | integer | 필수(미정 허용 항목은 NULL) |
+| recruitPeople | recruit_people | integer | 필수(미정 허용 항목은 NULL) |
+| sleeping | sleeping | text | 필수(미정 허용 항목은 NULL) |
+| roomArea | room_area | text | 필수(미정 허용 항목은 NULL) |
+| date | date | date | 필수(미정 허용 항목은 NULL) |
+| min | min | integer | 필수(미정 허용 항목은 NULL) |
+| endDate | end_date | date | 선택 동의 시만 저장 |
+| deposit | deposit | integer | 필수(미정 허용 항목은 NULL) |
+| rent | rent | integer | 필수(미정 허용 항목은 NULL) |
+| fee | fee | integer | 필수(미정 허용 항목은 NULL) |
+| meal | meal | text | 선택 동의 시만 저장 |
+| utilities | utilities | text | 필수(미정 허용 항목은 NULL) |
+| kitchen | kitchen | text | 필수(미정 허용 항목은 NULL) |
+| bath | bath | text | 필수(미정 허용 항목은 NULL) |
+| rules | rules | text | 필수(미정 허용 항목은 NULL) |
+| livingRules | living_rules | text | 필수(미정 허용 항목은 NULL) |
+| intro | intro | text | 선택 동의 시만 저장 |
+| contactTime | contact_time | text | 필수(미정 허용 항목은 NULL) |
+
+### vacancy 입력 → 타입 열
+
+| 폼 입력 | SQL 열 | 저장 타입 | 서버 입력 조건 |
+| --- | --- | --- | --- |
+| name | name | text | 선택 동의 시만 저장 |
+| region | region | text | 필수(미정 허용 항목은 NULL) |
+| address | address | text | 필수(미정 허용 항목은 NULL) |
+| type | type | text | 필수(미정 허용 항목은 NULL) |
+| certainty | certainty | text | 필수(미정 허용 항목은 NULL) |
+| leaveDate | leave_date | date | 조건부 필수 |
+| timingNote | timing_note | text | 조건부 필수 |
+| contractEnd | contract_end | date | 선택 동의 시만 저장 |
+| dateRange | date_range | text | 선택 동의 시만 저장 |
+| landlordNotified | landlord_notified | text | 필수(미정 허용 항목은 NULL) |
+| notifiedAt | notified_at | date | 조건부 필수 |
+| noticeMethod | notice_method | text | 조건부 필수 |
+| landlordResponse | landlord_response | text | 조건부 필수 |
+| plannedNoticeAt | planned_notice_at | date | 조건부 필수 |
+| landlordIntent | landlord_intent | text | 필수(미정 허용 항목은 NULL) |
+| deposit | deposit | integer | 선택 동의 시만 저장 |
+| rent | rent | integer | 선택 동의 시만 저장 |
+| currentFee | current_fee | text | 선택 동의 시만 저장 |
+| conditionNote | condition_note | text | 선택 동의 시만 저장 |
+| contactTime | contact_time | text | 필수(미정 허용 항목은 NULL) |
+| currentResident | current_resident | boolean | 필수(미정 허용 항목은 NULL) |
+
+### waiting 입력 → 타입 열
+
+| 폼 입력 | SQL 열 | 저장 타입 | 서버 입력 조건 |
+| --- | --- | --- | --- |
+| situation | situation | text | 필수(미정 허용 항목은 NULL) |
+| date | date | date | 필수(미정 허용 항목은 NULL) |
+| latestDate | latest_date | date | 선택 동의 시만 저장 |
+| startDate | start_date | date | 선택 동의 시만 저장 |
+| duration | duration | text | 선택 동의 시만 저장 |
+| workRegion | work_region | text | 선택 동의 시만 저장 |
+| workVillage | work_village | text | 선택 동의 시만 저장 |
+| regions | regions | text[] | 필수(미정 허용 항목은 NULL) |
+| anyRegion | any_region | boolean | 필수(미정 허용 항목은 NULL) |
+| deposit | deposit | integer | 필수(미정 허용 항목은 NULL) |
+| budget | budget | integer | 필수(미정 허용 항목은 NULL) |
+| types | types | text[] | 필수(미정 허용 항목은 NULL) |
+| kitchen | kitchen | text | 선택 동의 시만 저장 |
+| bath | bath | text | 선택 동의 시만 저장 |
+| transport | transport | text | 선택 동의 시만 저장 |
+| commute | commute | integer | 선택 동의 시만 저장 |
+| must | must | text | 선택 동의 시만 저장 |
+| preferences | preferences | text | 선택 동의 시만 저장 |
+
+### API·검증·잔여 작업
+
+POST /api/intake는 단일 RPC 저장, GET은 본인 목록 또는 id+kind에 대한 본인 상세를 반환한다. 본인 상세 사진 URL은 300초 서명 URL이며 신청자 매칭 사진 열람 구현과는 별개다. POST /api/intake/media는 1MB 입력 상한·디코딩/픽셀 제한·위치정보 제거·WebP 재인코딩 후 비공개 저장한다. POST /api/intake/delete는 소유권/version을 검사하고 신청/연락처/동의를 삭제하며 사진을 deleting으로 격리한다. POST /api/intake/maintenance는 CRON_SECRET 검증 후 만료 신청·고아 사진/교체 사진을 정리한다. 정기 실행·경보·외부 백업 파기는 미연결이다. 운영 DB 연결 후 권한·Storage 실검증이 필요하다.
+
+초기 적용 시도는 명시적 승인이 필요하다는 자동 검토 거부로 중단했으며, 이후 사용자가 개발 프로젝트 적용·실검증을 승인하여 아래 15장의 적용을 수행했다. 로컬 check/test:ci(21개)/build와 원격 실검증을 구분해 기록한다. 운영 배포는 수행하지 않았다.
+
+## 15. 개발 DB 적용·실제 검증 기록 — 2026-11-08
+
+사용자 명시 승인 후 개발 프로젝트 Tech for impact - Develop에 20261108104320_application_intake와 20261108145408_intake_auth_boundary를 적용했다. MCP가 발급한 실제 원격 migration 버전과 로컬 파일명을 일치시켰다. 다른 프로젝트는 변경하지 않았다.
+
+실제 Supabase의 service_role은 auth.users SELECT 권한이 없어 첫 저장 검증이 실패했다. 기존 save_intake의 직접 Auth 조회를 제거하는 보정 migration을 적용했다. 서버 getUser 검증과 Auth FK로 계정 존재를 보장하며 Auth 테이블 grants 확대나 SECURITY DEFINER 전환은 하지 않았다. 로컬 PGlite 테스트도 Auth SELECT 권한 없는 서비스 역할로 전체 migration 적용 후 검사하도록 수정했다. 원격 schema에서 생성한 lib/shared/database.types.ts를 추가했다.
+
+검증 경로: 로컬 Next.js production 빌드 서버 → 실제 개발 Supabase Auth/Data API/RPC/Storage. scripts/verify-intake-live.mjs를 명시적으로 실행해 합성 계정 2개로 11개 점검을 통과했다. 원격 키/비밀번호/세션/서명 URL/식별자는 메모리에서만 처리하고 문서/출력에 남기지 않는다.
+
+- 네 유형 모두 생성·본인 상세·번호 수정·version 증가·삭제와 연락처/동의 CASCADE 확인.
+- 같은 키 재전송은 동일 결과, 같은 키의 다른 요청 및 오래된 version은 409.
+- 계정 B의 계정 A 상세/수정/삭제는 404. 계정별 목록 격리, 비로그인 요청은 401.
+- 실제 JPEG 업로드 후 WebP·크기·EXIF 제거 확인, 비공개 Storage 저장과 본인 서명 URL 열람 확인.
+- anon/일반 JWT의 연락처 직접 조회·저장 RPC 직접 호출·비공개 사진 다운로드 거부 확인.
+- 정리 API는 비밀값 없이 호출하면 401. 전역 만료 정리는 다른 개발 데이터를 건드리지 않도록 실행하지 않았다.
+- 검증용 계정·신청·Storage 객체를 삭제하고 실제 DB 조회로 신청/매물/연락처/사진메타/버킷 객체 0건 확인. 기존 사용자 계정은 변경하지 않았다.
+
+보안 advisor: RLS Enabled No Policy INFO 11건은 테이블 grants를 차단하고 서버 서비스 접근만 허용하는 정책의 의도된 결과다. 유출 비밀번호 보호 비활성 WARN 1건은 기존 Auth 설정으로, 출시 전 플랜/설정을 확인해 처리할 후속 과제다. [공식 조치 안내](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). 심각한 업무 테이블 권한 노출 경고는 발견되지 않았다.
+
+남은 범위: 배포 환경 서버 키 설정/웹 배포, 정기 파기 호출·실패 경보, 운영자 권한·중개사 승인, 매칭 대상 사진 제공, 계정 탈퇴/백업 및 위탁·국외 이전 정책 확인. 전화 인증·SOLAPI·입주 후 거주 현황은 계속 제외한다.

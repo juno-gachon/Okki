@@ -54,7 +54,7 @@ function vacancyForm(id) {
     original?.status === "철회·마감"
   )
     return vacancyDetail(id);
-  const d = { ...(original?.data || {}), ...read("form-draft-vacancy-form-" + (id || "new"), {}) };
+  const d = { ...(original?.data || {}), ...(window.intakeEnabled ? {} : read("form-draft-vacancy-form-" + (id || "new"), {})) };
   /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return formShell(
     id ? "퇴거 예정 정보를 수정해요." : "곧 나갈 집의 소식을 알려주세요.",
     "퇴거 예정 정보는 비공개로 접수하며 집주인과 조건을 확인하기 전에는 방 소식으로 안내하지 않습니다.",
@@ -63,7 +63,7 @@ function vacancyForm(id) {
       box(
         "01",
         "누가, 어느 집에서 나가나요?",
-        `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${applicantPhoneField()}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${/* 휴대전화 체험 확인 보류: verifyUI("phone") */ ""}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
+        `<div class="fields">${inputField("이름 또는 별칭 (선택)", window.intakeEnabled ? "intakeApplicantName" : "name", d.name, 'required maxlength="40"')}${applicantPhoneField()}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${/* 휴대전화 체험 확인 보류: verifyUI("phone") */ ""}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
       ) +
       box(
         "02",

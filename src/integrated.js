@@ -238,7 +238,7 @@ function photoField() {
 
 /* wirePhotos — 화면 요소에 필요한 입력·클릭 이벤트를 연결하고 사용자의 동작을 처리합니다. */
 function wirePhotos(f) {
-  f._photos = read(draftKey(f), {})._photos || [];
+  f._photos = window.intakeEnabled && ["registration-broker","registration-resident","vacancy-form"].includes(f.id) ? [] : read(draftKey(f), {})._photos || [];
   const draw = () => {
     const p = f.querySelector(".upload-preview");
     if (p)
@@ -904,7 +904,7 @@ function schemaField([name, label, kind = "text", items], d) {
   const type = kind.replace("optional-", "");
   /* 앞에서 준비한 결과를 호출한 곳으로 돌려줍니다. */ return inputField(
     label + (required ? " *" : ""),
-    name,
+    window.intakeEnabled && name === "name" ? "intakeApplicantName" : window.intakeEnabled && name === "title" ? "intakeListingTitle" : name,
     d[name],
     `${required ? "required" : ""} type="${["number", "date", "tel"].includes(type) ? type : "text"}" ${type === "number" ? 'min="1" max="999"' : ""} ${name === "phone" ? 'pattern="0[0-9-]{8,14}"' : ""} maxlength="200"`,
   );
@@ -912,7 +912,7 @@ function schemaField([name, label, kind = "text", items], d) {
 
 /* registrationPage — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function registrationPage(mode) {
-  const d = read("form-draft-registration-" + mode, {});
+  const d = window.intakeEnabled ? {} : read("form-draft-registration-" + mode, {});
   return formShell(
     mode === "broker"
       ? "공인중개사가 확인한 매물을 등록해요."
@@ -2084,7 +2084,7 @@ function restoreDraft(f, d) {
 
 /* attachDrafts — 화면 요소에 필요한 입력·클릭 이벤트를 연결하고 사용자의 동작을 처리합니다. */
 function attachDrafts() {
-  const forms = $$("#main form").filter((f) => f.id && f.id !== "auth-form" && !f.hasAttribute?.("data-no-draft") && !["scope-form"].includes(f.id));
+  const forms = $$("#main form").filter((f) => f.id && !(typeof intakeFormKinds !== "undefined" && intakeFormKinds[f.id]) && f.id !== "auth-form" && !f.hasAttribute?.("data-no-draft") && !["scope-form"].includes(f.id));
   for (const f of forms) {
     if (f.querySelector(".draft-row")) continue;
     const d = read(draftKey(f), {});

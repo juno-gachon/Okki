@@ -160,3 +160,17 @@ DOMPurify는 HTML을 DOM으로 파싱한 뒤 허용된 태그·속성·네임스
 ## 2026-11-08 입주 후 거주 현황 후속 설계
 
 사용자 요청으로 README/DB 설계에 별도 선택 동의·최소 수집·기간 분리·철회/삭제·미응답 추정 금지·재식별 방지를 기록했다. 기능/DB/자동 연락은 미구현. 후속 완료 기준은 조사/보관 기간 고지와 권한·철회·삭제 검증. 이번에는 문서만 반영했다.
+
+## 2026-11-08 네 폼 서버 저장 구현
+
+근거: intake-handler/input, intake.js, migration 및 intake API/DB/DOM 테스트. getUser UUID·Origin·허용 열·전화 형식·선택 동의·사진 검증, no-store, 서비스 전용 grants/RLS, INVOKER 원자 저장·멱등 키·version, 소유권 검사·삭제/만료 정리 경로를 구현했다. 브라우저 원문/사진 localStorage 신규 저장은 차단하고 기존 체험을 자동 이관하지 않는다. DOMPurify가 name/title 이름을 제거하는 폼 문제는 충돌 없는 입력 이름으로 해결했다. 보호 주석을 코드에 포함했다.
+
+검증: check/test:ci 21개/build, PGlite 실제 PostgreSQL 엔진의 네 타입·동시 수정 충돌·멱등·롤백·일반 role 거부. API mock으로 타인 상세/Origin/인증/사진 MIME 위조 차단, 실제 DOM으로 네 폼 제출 확인. 원격 적용은 자동 승인 검토 거부로 중단하여 Supabase 실연동/권한/Storage/advisor는 미검증. 후속: 명시적 개발 migration 승인→실제 검증, 주기적 파기 실행/경보, 운영자 권한/중개사 승인, 개인정보 운영 주체/위탁/국외 이전/백업 확인. 사진 URL은 300초간 bearer 접근 가능, 이미 내려받은 사진 회수 불가. Auth 삭제 전 Storage 삭제 절차와 백업 파기는 후속이며 계정 탈퇴 기능 완료를 주장하지 않는다.
+
+## 2026-11-08 개발 DB 실제 적용·접근 차단 검증
+
+사용자가 명시 승인한 개발 프로젝트에 application_intake 및 intake_auth_boundary를 적용했다. 실제 service_role의 auth.users SELECT 부재로 첫 저장이 실패하여, 서버 getUser 및 FK를 신뢰 경계로 사용하고 RPC 중복 Auth 조회만 제거했다. Auth grants/DEFINER 우회는 적용하지 않았다. PGlite 서비스 역할 테스트에 이 권한 조건을 재현했다.
+
+실제 검증 스크립트 11개 점검 통과: 두 Auth 쿠키 세션, 네 폼 저장/조회/수정/삭제, 멱등/버전, 타인 접근 404와 비로그인 401, 실제 Storage 업로드/정제/서명 URL, anon/일반 JWT의 테이블/RPC/비공개 사진 직접 접근 거부. 테스트 계정/신청/사진은 삭제했고 잔여 업무 행과 파일 0건을 실제 조회했다. 기존 계정·다른 프로젝트는 변경하지 않았다.
+
+advisor: RLS no policy INFO 11건은 서비스 전용 grants 설계에 따른 의도된 차단. leaked password protection disabled WARN 1건은 미해결이며 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection 에 따라 플랜/설정 확인 후 처리한다. 코드·타입·migration·DB 문서에 근거를 남겼다. 정기 파기/경보·탈퇴/백업/위탁·이전·운영자 권한과 배포 환경 검증은 후속으로 유지하며 출시 완료를 주장하지 않는다.

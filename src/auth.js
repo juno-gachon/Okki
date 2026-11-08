@@ -106,7 +106,7 @@ function accountPage() {
   if (authState.status === 'loading') content = '<p role="status">로그인 상태를 확인하고 있어요.</p>';
   else if (authState.status === 'error') content = '<p>로그인 상태를 확인하지 못했습니다.</p><button class="btn" id="auth-retry">다시 확인</button>';
   else if (!authState.user) content = '<p>로그인 후 계정 정보를 확인할 수 있어요.</p><a class="btn" href="#/login">로그인</a>';
-  else content = `<p><b>이메일</b><br>${esc(authState.user.email)}</p><p class="micro">가입한 계정으로 로그인되어 있습니다.<br>기존 신청·매물 화면은 브라우저 체험 데이터이며 계정별 DB 저장은 아직 연결 전입니다.</p><button class="btn secondary" id="auth-logout">로그아웃</button>`;
+  else content = `<p><b>이메일</b><br>${esc(authState.user.email)}</p><p class="micro">가입한 계정으로 로그인되어 있습니다.<br>네 신청 폼에서 제출한 정보는 계정에 연결해 저장합니다.</p><section><h2>저장한 신청</h2><div id="intake-records" role="status">불러오는 중입니다.</div></section><button class="btn secondary" id="auth-logout">로그아웃</button>`;
   return `<div class="container auth-account"><section class="auth-card"><span class="section-kicker">MY ACCOUNT</span><h1>내 계정</h1>${content}<p id="auth-feedback" role="status" aria-live="polite"></p></section></div>`;
 }
 
@@ -120,6 +120,7 @@ function accountEvents() {
     try {
       await authRequest('logout', {});
       authState = { status: 'ready', user: null };
+      if(typeof intakeEdit !== 'undefined'){intakeEdit=null;waitDraft={};waitEdit=null;}
       location.hash = '/login';
       toast('로그아웃했습니다.');
     } catch {

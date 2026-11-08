@@ -182,6 +182,7 @@ function renderVacancyRoute(route, page, id, scroll) {
   setHTML($("#main"), page === "edit" ? vacancyForm(id) : vacancyDetail(id));
   document.title = "퇴거 예정 정보 | 옥키";
   if (page === "edit") vacancyEvents(id);
+  if (typeof intakeFormEvents === "function") intakeFormEvents();
   attachDrafts();
   $("#vacancy-form")?._vacancySync?.();
   focusRenderedPage(scroll);
@@ -193,6 +194,7 @@ function render(scroll = true) {
   const [route = "", id = "", sub = "", group = "", edit = "", last = ""] = location.hash
     .replace(/^#\/?/, "")
     .split("/");
+  if (typeof intakeEdit !== "undefined" && !["wait","request"].includes(route) && !(route === "provide" && ["broker","resident","vacancy"].includes(id))) intakeEdit=null;
   if (renderVacancyRoute(route, id, sub, scroll)) return;
   if (
     typeof phHome === "function" &&
@@ -216,6 +218,8 @@ function render(scroll = true) {
   }
   if (typeof mapEvents === "function" && ["place", "area"].includes(route)) mapEvents();
   if (route === "provide" && id === "vacancy") $("#vacancy-form")?._vacancySync?.();
+  if (typeof intakeFormEvents === "function") intakeFormEvents();
+  if (route === "account" && typeof intakeAccountRecords === "function") intakeAccountRecords();
   if (typeof updateAuthNavigation === "function") updateAuthNavigation();
 }
 

@@ -280,7 +280,7 @@ function waitStepTwo(d) {
 // DB/운영자 권한 구현 전에는 번호를 체험 저장·초안에 보관하지 않는다.
 function applicantPhoneField() {
   return inputField("신청자 전화번호 * · 비공개", "phone", "", 'type="tel" required inputmode="tel" autocomplete="tel" maxlength="15" pattern="0[0-9]{1,2}( |-)?[0-9]{3,4}( |-)?[0-9]{4}" placeholder="010-0000-0000"') +
-    '<p class="micro">전화번호 인증은 하지 않습니다. 운영자가 신청 확인이나 매물 안내를 위해 직접 연락할 번호를 입력해주세요.</p><p class="micro">현재는 입력 체험 단계로 전화번호가 저장되거나 운영자에게 전송되지 않습니다. 예시 번호를 입력해주세요.</p>';
+    '<p class="micro">전화번호 인증은 하지 않습니다. 운영자가 신청 확인이나 매물 안내를 위해 직접 연락할 번호를 입력해주세요.</p><p class="micro">제출한 전화번호는 현재 로그인한 계정의 신청에 연결해 저장하며 담당 운영자의 직접 연락에 사용합니다.</p>';
 }
 
 /* verifyUI — 이름에 해당하는 기능을 현재 상태와 입력값을 바탕으로 처리합니다. */
@@ -355,7 +355,7 @@ function saveWaitDraft() {
   waitDraft = { ...waitDraft, ...d };
   // 이전 체험 초안의 연락처와 직장명은 더 이상 저장하지 않는다.
   for (const key of ["destination", "name", "phone", "email", "reply", "verifiedPhone", "verifiedEmail", "phoneCode", "emailCode"]) delete waitDraft[key];
-  save("wait-draft", waitDraft);
+  if (!window.intakeEnabled) save("wait-draft", waitDraft);
 }
 
 /* waitEvents — 화면 요소에 필요한 입력·클릭 이벤트를 연결하고 사용자의 동작을 처리합니다. */

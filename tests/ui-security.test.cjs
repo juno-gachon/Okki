@@ -104,7 +104,7 @@ test('four application forms collect unverified phone input without persisting i
         assert.equal(input.checkValidity(), true, value);
       }
       assert.ok(target.textContent.includes('전화번호 인증은 하지 않습니다.'));
-      assert.ok(target.textContent.includes('전화번호가 저장되거나 운영자에게 전송되지 않습니다.'));
+      assert.ok(target.textContent.includes('현재 로그인한 계정의 신청에 연결해 저장'));
     }
     const payload = { phone: '010-0000-0000', data: { phone: '010-0000-0000', verifiedPhone: true, phoneCode: '000000', title: '합성 조건' } };
     for (const key of ['applications', 'wait-draft', 'form-draft-wait-form-2', 'form-draft-registration-broker', 'form-draft-registration-resident', 'form-draft-vacancy-form-new']) {
@@ -117,4 +117,43 @@ test('four application forms collect unverified phone input without persisting i
       assert.equal(stored.data.title, '합성 조건');
     }
   } finally { w.close(); }
+});
+
+
+test('four live intake forms send typed, account-bound submissions without localStorage fallback', async () => {
+ const dom=browser(),w=dom.window,context=dom.getInternalVMContext();
+ try {
+  const {validateIntake}=await import('../lib/server/intake-input.mjs');
+  const actor='11111111-1111-4111-8111-111111111111';let posted;
+  w.fetch=async(url,options={})=>{
+   if(url==='/api/auth/session')return {ok:true,json:async()=>({user:{id:actor,email:'synthetic@example.com'}})};
+   if(url==='/api/intake'&&options.method==='POST'){
+    const body=JSON.parse(options.body);validateIntake(body,options.headers['Idempotency-Key']);posted=body;
+    return {ok:true,json:async()=>({application:{id:'22222222-2222-4222-8222-222222222222',version:1,kind:body.kind}})};
+   }
+   return {ok:true,json:async()=>({applications:[]})};
+  };
+  vm.runInContext('authState={status:"ready",user:{id:"'+actor+'"}}',context);
+  for(const [kind,hash] of [['broker','#/provide/broker'],['resident','#/provide/resident'],['vacancy','#/provide/vacancy'],['waiting','#/wait/2']]){
+   if(kind==='waiting')vm.runInContext('waitDraft={situation:"입사 예정",date:"2026-11-12",regions:["옥천읍"],anyRegion:false,deposit:"300",budget:"50"}',context);
+   w.location.hash=hash;vm.runInContext('render()',context);
+   const form=w.document.querySelector('#wait-form,#registration-broker,#registration-resident,#vacancy-form');assert.ok(form);
+   for(const input of form.querySelectorAll('input,select,textarea')){
+    if(input.type==='file')continue;
+    if(input.type==='checkbox'){input.checked=input.required;continue;}
+    if(input.name==='phone')input.value='010-0000-0000';
+    else if(input.tagName==='SELECT')input.selectedIndex=input.options[0].value?0:1;
+    else if(input.type==='date')input.value='2026-11-12';
+    else if(input.type==='number')input.value='1';
+    else if(input.required)input.value=input.name==='address'?'합성 건물 주소':'합성 입력';
+   }
+   for(const input of form.querySelectorAll('input[type=date],select[name=noticeMethod],select[name=landlordResponse]'))input.disabled=false;
+   if(kind==='resident')form.elements.authority.value='임차인·필요한 동의 확보';
+   form.elements.intakeConsent.checked=true;assert.equal(form.checkValidity(),true);
+   posted=null;await form.onsubmit({preventDefault(){}});
+   assert.ok(posted,form.querySelector('.form-error')?.textContent);assert.equal(posted.kind,kind);
+   assert.equal(posted.phone,'010-0000-0000');assert.equal(w.document.querySelector('#main h1').textContent,'신청이 저장되었습니다.');
+   assert.equal(w.localStorage.getItem('okki-applications'),null);
+  }
+ } finally {w.close();}
 });
