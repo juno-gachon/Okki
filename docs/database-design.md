@@ -904,3 +904,20 @@ POST /api/intake는 단일 RPC 저장, GET은 본인 목록 또는 id+kind에 �
 - 실제 Edge 브라우저에서 로그인, 네 폼 화면 입력→저장→계정 목록→수정→삭제가 통과했다. 세 방 등록 폼은 각 사진 업로드와 수정 화면의 이미지 실제 디코딩/표시까지 확인했다. 방 알림은 사진 입력 대상이 아니다. 브라우저 JavaScript 오류는 없었다.
 - 합성 계정과 해당 데이터/사진을 삭제했다. DB와 Storage의 잔여 자료를 읽기 조회로 확인했다. 다른 프로젝트와 운영 배포는 변경하지 않았다.
 - 보안 advisor는 서비스 전용 설계의 RLS no policy INFO 11건, 기존 유출 비밀번호 보호 비활성 WARN 1건이었다. 후자는 후속으로 유지한다. 정기 삭제 스케줄·경보/운영자 권한/매칭 제공/개인정보 외부 처리 확인은 이번 검증으로 완료된 것이 아니다.
+
+## 2026-11-09 운영 관리 구현 (D02/D09, T01 접근 제어)
+
+사용자 승인 범위: 지정 운영자의 네 폼/번호 조회, 거주자 확인 상태·연락 결과 관리, 실제 알림 내역 조회. /admin은 서버에서 Auth getUser와 활성 owner/operator 멤버십을 검사하고 미인가에 404, API는 401/403을 반환한다. 기존 체험 관리자 해시는 /admin으로 이동한다. 운영자 등록은 일반 가입으로 불가능하며 별도 통제된 DB 관리 작업으로 지정해야 한다.
+
+신규 migration admin_operations: admin_memberships(user_id Auth FK CASCADE,role,active), admin_records(UUID,신청/매물 FK CASCADE 중 하나,actor Auth SET NULL,시각,action,result,note 1000자), match_deliveries(UUID,신청/매물 FK CASCADE,시각,channel,status,delivered_at). 세 테이블 RLS 및 일반 역할 grants 차단. 조회 감사와 연락/확인 변경은 record_admin_action INVOKER 서비스 전용 RPC에서 활성 역할 재확인·부모 잠금·만료/version 검사한다. 연락·확인 변경은 부모 version을 증가시킨다. 중개사 개별 확인 상태 변경 금지. 내부 메모는 본인 API에 반환하지 않는다. 신청 상세는 필드 허용목록과 연락처만 반환한다. 목록은 번호 제외·50건 페이지, 상세 이력/알림은 최신100건.
+
+match_deliveries는 후보가 아닌 실제 알림 시스템의 접수/전달 증거용이며 이번에는 읽기만 제공한다. 발송 시스템과 웹 알림 생성은 미연결이므로 임의 과거 체험 알림을 이관하지 않는다. SMS/자동 매칭 활성화 없음. 원격 migration 적용·최초 운영자 지정·배포·실연동은 미검증. 운영자 지정 대상은 사용자 확인 필요. 신규 타입은 아래 별도 타입에 기록한다.
+검증 결과: check/test:ci 26개/build 통과. PGlite 전체 migration 적용 통과. remote 적용 없음. 공개 문서에는 구조/합성 예시만 추가했다.
+
+### 2026-11-09 개발 DB 운영 기능 적용 및 SQL 실검증
+
+admin_operations migration을 Tech for impact - Develop에 적용했다. 실제 PostgreSQL에서 transaction 안의 합성 Auth/운영자/신청으로 상세 조회 감사·연락 결과 저장·version 증가·오래된 version 거부·운영 권한 회수 후 RPC 거부를 확인하고 전부 rollback했다. 일반 authenticated/anon의 신규 테이블 및 RPC 직접 접근 권한 차단도 확인했다. 실제 계정 식별자·이메일은 문서에 기록하지 않는다. 사용자가 지정한 계정은 개발 Auth에 아직 없어 권한 부여하지 않았다. 최초 운영자 지정과 실제 로그인 브라우저 검증은 가입 후 진행해야 한다. 앱 배포·알림 발송은 수행하지 않았다.
+
+### 2026-11-09 운영자 지정 완료
+
+사용자 새 지정 계정의 개발 Auth UUID에 operator/active 적용 및 조회 확인 완료. 식별자는 문서에서 제외. 실제 개발 DB+로컬 앱 HTTP 검증에서 운영자 페이지/목록200, 일반 계정404/403, 비로그인404/401 확인. 합성 자료 삭제. scripts/verify-admin-live.mjs 근거. 원격 앱 배포와 배포 사이트 접근 확인은 남음.

@@ -186,3 +186,22 @@ advisor: RLS no policy INFO 11건은 서비스 전용 grants 설계에 따른 �
 8a77185의 Actions CI·배포 성공 후 배포 API 11개 점검 및 실제 Edge 브라우저 전 경로가 통과했다. 방 알림/중개사/공동거주/퇴거의 생성·수정·삭제, 세 등록 폼의 사진 업로드/본인 수정 화면 표시·유지, 공동거주 선택 보존, JavaScript 오류 없음 확인. 비로그인/타인 사진 프록시 401/404와 일반 JWT의 직접 테이블/RPC/Storage 거부도 확인했다. 테스트용 Auth 계정·신청·Storage 객체를 삭제하고 잔여 합성 자료를 조회했다. 실제 키/쿠키/서명·우회 URL은 공개 기록에 남기지 않았다. CSP·버킷 공개 설정은 완화하지 않았다.
 
 advisor 재검토: 서비스 전용 grants에 따른 RLS no policy INFO 11건은 의도된 상태. Auth leaked password protection disabled WARN 1건은 계속 후속이다. 정기 파기 호출과 경보, 운영자 역할, production 및 개인정보 외부 처리 검증은 남아 있다.
+
+## 2026-11-09 운영자 권한 기반 조사 (미완료)
+
+근거: lib/server/admin-auth.mjs, tests/admin-auth.test.cjs, docs/database-design.md 4.14·4.20. 적용: 검증된 Auth 사용자와 활성 owner/operator 멤버십만 허용하는 서버 전용 권한 검사 함수를 추가했다. analyst, 비활성 계정, 비로그인 및 DB 오류는 거부한다. 사용자 메타데이터와 이메일은 권한 근거가 아니다. 이 함수는 아직 어떤 라우트에도 연결되지 않아 운영자 페이지를 보호하거나 제공하지 않는다.
+
+미구현: admin_memberships 및 감사·연락·확인 이력 스키마와 원자적 변경, 민감 조회 감사, 네 폼 관리 API/화면, 매칭 안내 기록, 최초 운영자 지정, 실제 DB 권한 및 브라우저 검증. 기존 해시 운영 화면은 브라우저 예시이며 실제 운영 페이지가 아니다. 완료 기준: 각 API에서 매 요청 검사, 일반 사용자 직접 DB/RPC 접근 차단, 감사·동시성·전화번호 노출 경계 및 실제 환경 검증. 운영 DB 변경·배포·발송은 하지 않았다.
+
+## 2026-11-09 운영자 화면/API 연결
+
+이전 미완료 기록의 라우트 미연결 부분을 대체한다. /admin 서버 페이지·/api/admin·admin.js를 연결했다. 일반 계정은 페이지 404/API403, 미로그인은 API401. 각 API에서 역할 재조회, 상세 열람 감사 선기록, 연락/확인 변경 RPC에서 역할·부모·version 재검증. 내부 메모·번호는 textContent 출력, 저장소 미사용, no-store. 원격 DB 적용·지정 운영자·실제 브라우저 실연동은 아직 미검증. 기존 미결정 개인정보 정책·외부 처리/삭제/복구는 유지한다. match_deliveries를 생성하는 발송 시스템은 별도 범위다.
+검증: npm run check, npm run test:ci(26개), npm run build 통과. 신규 API mock은 미로그인/일반/비활성/analyst 거부와 감사 이후 신청·전화·연락·알림 허용목록 응답을 검증했다. 기존 PGlite 테스트에서 신규 migration 전체 문법 적용을 확인했다. 실제 운영자 페이지 브라우저·원격 DB RPC 상태 변경 실검증은 남아 있다.
+
+### 2026-11-09 개발 DB 적용 실검증 추가
+
+신규 운영 migration 개발 DB 적용 완료. 실제 PostgreSQL 합성 transaction에서 감사/연락 저장·version 증가·stale version CONFLICT·비활성 운영자 FORBIDDEN 및 일반 역할 직접 table/RPC grants 차단을 확인했다. 합성 데이터 전부 rollback. 사용자 지정 계정은 개발 Auth 조회 결과 0건이어서 권한 부여 보류(가입 필요). 실사용 계정 이메일/UUID는 공개 문서에 기록하지 않는다. 앱 배포와 실제 계정 브라우저 검증은 미실행이며 SQL 검증과 구분한다.
+
+### 2026-11-09 지정 운영자 활성화 및 실제 HTTP 접근 검증
+
+사용자가 새로 지정한 가입 계정의 개발 Auth 존재 1건을 확인하고 UUID에 operator/active 멤버십을 부여했다. 이메일/UUID는 공개 문서에 기록하지 않는다. 실제 개발 DB를 사용하는 로컬 production 앱에서 합성 운영자/일반 계정의 Auth 쿠키로 /admin 및 /api/admin(session·목록)을 호출했다. 운영자 200, 일반 사용자 페이지404/API403, 비로그인 페이지404/API401 및 no-store를 확인했다. scripts/verify-admin-live.mjs로 검증했고 합성 계정/멤버십·임시 자격증명 파일을 삭제했다. 실제 지정 계정으로 로그인하거나 비밀번호를 요청하지 않았다. 개발 사이트에 앱 코드를 배포하지 않았으므로 사이트에서의 최종 접근은 배포 후 별도 확인 필요. 기존 지정 이메일의 미가입 보류 기록은 새 지정 계정 활성화로 대체한다.

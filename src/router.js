@@ -194,6 +194,7 @@ function render(scroll = true) {
   const [route = "", id = "", sub = "", group = "", edit = "", last = ""] = location.hash
     .replace(/^#\/?/, "")
     .split("/");
+  if (["admin","public-admin","community-admin"].includes(route)) { location.replace("/admin"); return; }
   if (typeof intakeEdit !== "undefined" && !["wait","request"].includes(route) && !(route === "provide" && ["broker","resident","vacancy"].includes(id))) intakeEdit=null;
   if (renderVacancyRoute(route, id, sub, scroll)) return;
   if (
