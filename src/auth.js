@@ -106,17 +106,41 @@ function accountPage() {
   if (authState.status === 'loading') content = '<p role="status">로그인 상태를 확인하고 있어요.</p>';
   else if (authState.status === 'error') content = '<p>로그인 상태를 확인하지 못했습니다.</p><button class="btn" id="auth-retry">다시 확인</button>';
   else if (!authState.user) content = '<p>로그인 후 계정 정보를 확인할 수 있어요.</p><a class="btn" href="#/login">로그인</a>';
-  else content = `<p><b>이메일</b><br>${esc(authState.user.email)}</p><p class="micro">가입한 계정으로 로그인되어 있습니다.<br>네 신청 폼에서 제출한 정보는 계정에 연결해 저장합니다.</p><section><h2>저장한 신청</h2><div id="intake-records" role="status">불러오는 중입니다.</div></section><button class="btn secondary" id="auth-logout">로그아웃</button>`;
+  else content = `<p><b>이메일</b><br>${esc(authState.user.email)}</p><p class="micro">가입한 계정으로 로그인되어 있습니다.<br>네 신청 폼에서 제출한 정보는 계정에 연결해 저장합니다.</p><section><h2>저장한 신청</h2><div id="intake-records" role="status">불러오는 중입니다.</div></section><div id="account-admin-access"></div><button class="btn secondary" id="auth-logout">로그아웃</button>`;
   return `<div class="container auth-account"><section class="auth-card"><span class="section-kicker">MY ACCOUNT</span><h1>내 계정</h1>${content}<p id="auth-feedback" role="status" aria-live="polite"></p></section></div>`;
 }
 
+// 버튼은 편의용 진입점이다. 실제 페이지/API 권한은 서버가 매 요청 검사한다.
+// 응답 지연 중 계정/화면이 바뀌면 이전 운영자 결과를 새 화면에 적용하지 않는다.
+async function accountAdminAccess() {
+  const target = $('#account-admin-access');
+  const userId = authState.user?.id;
+  const revision = authRevision;
+  if (!target || !userId) return;
+  target.replaceChildren();
+  try {
+    const response = await fetch('/api/admin?session=1', {
+      credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(12000),
+    });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (data.admin !== true || authRevision !== revision || authState.user?.id !== userId ||
+        $('#account-admin-access') !== target || !target.isConnected) return;
+    const link = document.createElement('a');
+    link.href = '/admin'; link.className = 'btn'; link.textContent = '운영자 관리';
+    target.append(link);
+  } catch { /* 권한 확인 실패 시 진입 버튼을 만들지 않는다. */ }
+}
+
 function accountEvents() {
+  accountAdminAccess();
   const retry = $('#auth-retry');
   if (retry) retry.onclick = () => authLoadSession();
   const logout = $('#auth-logout');
   if (logout) logout.onclick = async () => {
     if (authBusy) return;
     authBusy = true; ++authRevision; logout.disabled = true;
+    $('#account-admin-access')?.replaceChildren();
     try {
       await authRequest('logout', {});
       authState = { status: 'ready', user: null };

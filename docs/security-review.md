@@ -205,3 +205,13 @@ advisor 재검토: 서비스 전용 grants에 따른 RLS no policy INFO 11건은
 ### 2026-11-09 지정 운영자 활성화 및 실제 HTTP 접근 검증
 
 사용자가 새로 지정한 가입 계정의 개발 Auth 존재 1건을 확인하고 UUID에 operator/active 멤버십을 부여했다. 이메일/UUID는 공개 문서에 기록하지 않는다. 실제 개발 DB를 사용하는 로컬 production 앱에서 합성 운영자/일반 계정의 Auth 쿠키로 /admin 및 /api/admin(session·목록)을 호출했다. 운영자 200, 일반 사용자 페이지404/API403, 비로그인 페이지404/API401 및 no-store를 확인했다. scripts/verify-admin-live.mjs로 검증했고 합성 계정/멤버십·임시 자격증명 파일을 삭제했다. 실제 지정 계정으로 로그인하거나 비밀번호를 요청하지 않았다. 개발 사이트에 앱 코드를 배포하지 않았으므로 사이트에서의 최종 접근은 배포 후 별도 확인 필요. 기존 지정 이메일의 미가입 보류 기록은 새 지정 계정 활성화로 대체한다.
+
+### 2026-11-09 개발 사이트 배포 완료 및 접근 실검증
+
+관리 구현 커밋 d7763d1f34b0cac7e4adc7429f2aeca9ad0a65bf를 develop에 push했다. CI run 42498895397 및 Deploy Vercel run 42498895586 success, develop 고정 주소 연결 완료. check/test:ci 26개/build 통과. production 배포·발송 없음.
+
+배포 사이트의 /admin, /api/admin?session=1, /api/admin?kind=waiting을 실제 Auth 쿠키로 검증했다. 합성 운영자 모두200, 일반 계정 페이지404/API403, 비로그인 페이지404/API401, no-store 통과. scripts/verify-admin-live.mjs 사용. 만료된 로컬 OIDC의 보호 리디렉션은 앱 성공으로 집계하지 않았다. 환경 다운로드는 자동 승인 거부 후 진행하지 않았으며 기존 Vercel CLI 인증 curl 방식으로 검증 완료. 배포 보호 설정 변경 없음. 합성 계정/임시 멤버십·자격증명 파일 삭제. 지정 운영자 멤버십 유지 확인. 실제 지정 계정의 비밀번호·세션은 사용하지 않았다. 브라우저 화면 조작 검증과는 구분한다.
+
+### 2026-11-09 운영자 전용 진입 버튼
+
+src/auth.js: 내 계정의 account-admin-access 영역에 GET /api/admin?session=1의 admin=true 응답을 확인한 뒤 DOM API로만 /admin 링크를 추가한다. 이메일·클라이언트 role로 표시하지 않는다. 미로그인/일반 계정/분석 담당자/비활성 역할/API 장애는 버튼 없음. 응답 시 계정·authRevision·현재 DOM 연결을 재검사해 로그아웃/계정 전환/재렌더 지연 응답을 차단한다. 로그아웃 시작 시 버튼 제거. 서버 접근 제어는 기존 유지. tests/admin-navigation.test.cjs에서 서버 허용/거부/통신 실패 및 지연 응답을 검증한다. DB/권한 설정 변경 없음.
