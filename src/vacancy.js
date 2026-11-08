@@ -63,7 +63,7 @@ function vacancyForm(id) {
       box(
         "01",
         "누가, 어느 집에서 나가나요?",
-        `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${/* 전화번호 입력 보류: inputField("휴대전화 * · 비공개", "phone", d.phone, 'required type="tel" pattern="0[0-9-]{8,14}"') */ ""}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${/* 휴대전화 체험 확인 보류: verifyUI("phone") */ ""}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
+        `<div class="fields">${inputField("이름 또는 별칭 *", "name", d.name, 'required maxlength="40"')}${applicantPhoneField()}${selectField("읍·면 *", "region", regions, d.region, true)}${inputField("상세 주소 * · 비공개", "address", d.address, 'required maxlength="180"')}${selectField("주거 형태 *", "type", ["원룸·투룸", "아파트·오피스텔", "단독·다가구", "셰어·하숙", "기타"], d.type, true)}</div>${/* 휴대전화 체험 확인 보류: verifyUI("phone") */ ""}${checkField("currentResident", "[필수] 현재 이 집에 거주하고 있으며 퇴거를 계획하고 있어요.", d.currentResident, true)}`,
       ) +
       box(
         "02",
@@ -161,6 +161,8 @@ function vacancySave(d, photos = [], id) {
     forwardPermission: d.ownerConnection === "집주인이 옥키 연락에 동의했어요" && !!d.ownerConsent,
   };
   delete clean.phoneCode;
+  // 인증 없는 연락처는 DB 연결 전 체험 데이터에 저장하지 않는다.
+  delete clean.phone;
   if (d.certainty === "미정") clean.leaveDate = "";
   if (d.landlordNotified !== "알렸어요") {
     clean.notifiedAt = "";

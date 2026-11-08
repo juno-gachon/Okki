@@ -51,7 +51,13 @@ let storageOK = true;
 /* save — 값을 JSON으로 직렬화해 브라우저 저장소에 기록하고 실패 시 사용자에게 알립니다. */
 function save(k, v) {
   try {
-    localStorage.setItem("okki-" + k, JSON.stringify(v));
+    // 새 신청자 번호는 운영자 전용 DB를 연결하기 전 localStorage에 쓰지 않는다.
+    // 중첩된 신청 데이터·수동 초안도 포함한다. 자유문구 속 번호 탐지는 별도 과제다.
+    const privateForm = k === "applications" || k === "wait-draft" ||
+      /^form-draft-(wait-form|registration-|vacancy-form)/.test(k);
+    localStorage.setItem("okki-" + k, JSON.stringify(v, privateForm
+      ? (key, value) => ["phone", "phoneCode", "verifiedPhone"].includes(key) ? undefined : value
+      : undefined));
     return true;
   } catch {
     storageOK = false;

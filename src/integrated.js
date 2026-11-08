@@ -754,7 +754,7 @@ function unavailable() {
 /* registrationSchemas — 이 구간에서 사용하는 데이터, 설정 또는 상태를 준비합니다. */
 const registrationSchemas = {
   broker: [
-    /* 중개사무소 정보 입력은 계정 기반 관리 도입 전까지 보류.
+    // 중개사 계정을 옥키가 발급하고 사무소 정보를 연결하면 이 입력란을 제거한다.
     [
       "01",
       "중개사무소와 담당자",
@@ -764,12 +764,12 @@ const registrationSchemas = {
         ["representative", "대표 공인중개사 성명"],
         ["name", "담당자 이름·역할"],
         ["officeAddress", "중개사무소 주소"],
-        ["officePhone", "사무소 전화번호"],
-        ["phone", "담당자 휴대전화", "tel"],
+        // 사무소 대표번호는 보류. 신청자 번호는 인증 없이 운영자 연락용으로 받는다.
+        // ["officePhone", "사무소 전화번호"],
+        ["phone", "신청자 전화번호", "tel"],
         ["officeEvidence", "사무소 확인 자료·등록 정보 설명", "textarea"],
       ],
     ],
-    */
     [
       "02",
       "매물과 중개 의뢰",
@@ -834,7 +834,7 @@ const registrationSchemas = {
       "현재 거주자와 모집 권한",
       [
         ["name", "이름 또는 별칭"],
-        // 전화번호 수집은 보류: ["phone", "휴대전화", "tel"],
+        ["phone", "신청자 전화번호", "tel"],
         ["residency", "현재 거주 여부·확인 방법"],
         [
           "authority",
@@ -889,6 +889,7 @@ function registerChoice() {
 
 /* schemaField — 해당 화면 또는 화면에 들어갈 정보를 현재 데이터에 맞춰 구성합니다. */
 function schemaField([name, label, kind = "text", items], d) {
+  if (name === "phone") return applicantPhoneField();
   const required = !kind.startsWith("optional");
   /* 조건이 충족되지 않거나 별도 처리가 필요한 경우를 먼저 확인합니다. */ if (kind === "select")
     return selectField(label + " *", name, items, d[name], true);
@@ -955,6 +956,8 @@ function registrationEvents(mode) {
     if (f._loading || !f._photos.length)
       return errorForm(f, "공간 사진을 한 장 이상 추가해주세요.");
     const d = getData(f);
+    // 운영 DB 연결 전에는 신청자 번호를 체험 신청 객체에 남기지 않는다.
+    delete d.phone;
     if (d.max && +d.max < +d.min)
       return errorForm(f, "최대 기간은 최소 기간 이상으로 입력해주세요.");
     const a = {

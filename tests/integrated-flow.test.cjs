@@ -556,10 +556,15 @@ assert(run("providePage()").includes("함께 살 사람 모집하기"));
 const brokerFormHtml = run("registrationPage('broker')");
 const residentFormHtml = run("registrationPage('resident')");
 const vacancyFormHtml = run("vacancyForm()");
-assert(!brokerFormHtml.includes("중개사무소와 담당자"));
+assert(brokerFormHtml.includes("중개사무소와 담당자"));
+for (const name of ["office", "officeNumber", "representative", "name", "officeAddress", "officeEvidence"]) {
+  assert(brokerFormHtml.includes(`name="${name}"`));
+}
+assert(!brokerFormHtml.includes('name="officePhone"'));
 for (const html of [brokerFormHtml, residentFormHtml, vacancyFormHtml]) {
   assert(!html.includes("휴대전화 확인 · 체험"));
-  assert(!html.includes('name="phone"'));
+  assert(html.includes('name="phone"'));
+  assert(html.includes("전화번호 인증은 하지 않습니다."));
 }
 const waitOneHtml = run("waitStepOne({workRegion:'옥천읍',workVillage:'금구리'})");
 const waitTwoHtml = run("waitStepTwo({types:[]})");
@@ -568,6 +573,28 @@ assert(waitOneHtml.includes("금구리"));
 assert(!waitOneHtml.includes('name="destination"'));
 assert(!waitTwoHtml.includes("고용주 숙소"));
 assert(!waitTwoHtml.includes("소식을 받을 연락처"));
+assert(waitTwoHtml.includes('name="phone"'));
+
+f = form("#registration-broker", {
+  office: "예시 중개사무소",
+  officeNumber: "예시 등록번호",
+  representative: "예시 대표자",
+  name: "예시 담당자",
+  officeAddress: "예시 사무소 위치",
+  officeEvidence: "등록 정보 확인 예정",
+  title: "예시 매물",
+  region: "옥천읍",
+  min: "1",
+  max: "6",
+  privacy: true,
+});
+run("registrationEvents('broker')");
+f._photos = ["data:image/png;base64,example"];
+submit(f);
+assert.equal(run("applications[0].data.office"), "예시 중개사무소");
+assert.equal(run("applications[0].data.officeNumber"), "예시 등록번호");
+assert(run("tipDetail(applications[0].id)").includes("예시 중개사무소"));
+run("applications=[]");
 
 /* 앞에서 준비한 상태를 바탕으로 초기 설정을 적용하거나 기능을 연결합니다. */
 f = form("#registration-resident", {

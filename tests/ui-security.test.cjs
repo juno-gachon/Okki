@@ -82,3 +82,39 @@ test('production CSP denies inline script attributes and eval', async () => {
     assert.doesNotMatch(csp, /unsafe-eval/);
   } finally { if (previous === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previous; }
 });
+
+
+test('four application forms collect unverified phone input without persisting it in demo storage', () => {
+  const dom = browser(), w = dom.window, context = dom.getInternalVMContext();
+  try {
+    const target = w.document.createElement('div');
+    for (const expression of ["waitStepTwo({types:[]})", "registrationPage('broker')", "registrationPage('resident')", "vacancyForm()"]) {
+      w.setHTML(target, vm.runInContext(expression, context));
+      const input = target.querySelector('input[name="phone"]');
+      assert.ok(input, expression);
+      assert.equal(input.required, true);
+      assert.equal(input.type, 'tel');
+      assert.equal(target.querySelector('[data-verify="phone"], input[name="phoneCode"]'), null);
+      for (const value of ['', 'abc', '1234', '010--0000-0000', '010-0000-0000x']) {
+        input.value = value;
+        assert.equal(input.checkValidity(), false, value);
+      }
+      for (const value of ['010-0000-0000', '01000000000', '02-000-0000']) {
+        input.value = value;
+        assert.equal(input.checkValidity(), true, value);
+      }
+      assert.ok(target.textContent.includes('전화번호 인증은 하지 않습니다.'));
+      assert.ok(target.textContent.includes('전화번호가 저장되거나 운영자에게 전송되지 않습니다.'));
+    }
+    const payload = { phone: '010-0000-0000', data: { phone: '010-0000-0000', verifiedPhone: true, phoneCode: '000000', title: '합성 조건' } };
+    for (const key of ['applications', 'wait-draft', 'form-draft-wait-form-2', 'form-draft-registration-broker', 'form-draft-registration-resident', 'form-draft-vacancy-form-new']) {
+      assert.equal(w.save(key, payload), true);
+      const stored = JSON.parse(w.localStorage.getItem('okki-' + key));
+      assert.equal(stored.phone, undefined);
+      assert.equal(stored.data.phone, undefined);
+      assert.equal(stored.data.verifiedPhone, undefined);
+      assert.equal(stored.data.phoneCode, undefined);
+      assert.equal(stored.data.title, '합성 조건');
+    }
+  } finally { w.close(); }
+});
