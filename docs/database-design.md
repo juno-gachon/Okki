@@ -894,4 +894,13 @@ POST /api/intake는 단일 RPC 저장, GET은 본인 목록 또는 id+kind에 �
 
 수정: src/intake.js에서 미리보기 data URL을 atob/Blob으로 로컬 변환하고 CSP를 완화하지 않는다. 본인 사진은 새 GET /api/intake/media/[id] 프록시로 제공하며 매 요청 getUser·사진 owner·ready·부모 신청 owner/만료일을 검사한다. 외부 Storage 경로/서명 URL을 브라우저에 반환하지 않으며 응답은 image/webp, private no-store다. 등록자의 본인 사진 경로이고 매칭 수신자 접근은 후속이다. 이전 14~15장의 300초 서명 URL 설명은 이 구현으로 대체한다.
 
-방 알림 화면의 공동거주 수용 여부(sharing)가 입력 사전에 빠진 것도 보완했다. housing_requests.sharing text nullable에 단독 주거만/공동거주 가능/상담 후 결정 CHECK를 추가하고 저장 RPC의 수정 경로에도 반영했다. 선택 동의 시만 저장한다. migration 20261108152907_intake_sharing_preference는 개발 프로젝트에 적용 완료, 서버/UI 필드 사전·생성 타입·검증기와 동기화했다. check/test:ci 23개 통과, 최종 재배포 후 브라우저·API 재검증을 진행한다. 기존 테스트의 RLS/소유권 정책은 유지한다.
+방 알림 화면의 공동거주 수용 여부(sharing)가 입력 사전에 빠진 것도 보완했다. housing_requests.sharing text nullable에 단독 주거만/공동거주 가능/상담 후 결정 CHECK를 추가하고 저장 RPC의 수정 경로에도 반영했다. 선택 동의 시만 저장한다. migration 20261108152907_intake_sharing_preference는 개발 프로젝트에 적용 완료, 서버/UI 필드 사전·생성 타입·검증기와 동기화했다. check/test:ci 23개/build 통과. 8a77185 재배포 후 아래 실제 브라우저·API 검증을 완료했다. 기존 테스트의 RLS/소유권 정책은 유지한다.
+
+### Preview 최종 검증 결과
+
+2026-11-09: Actions가 검증한 develop 커밋 167fde2와 보정 커밋 8a77185를 Preview에 순차 배포했다. 배포 보호를 유지하고 기존 CLI 인증으로만 접근했다. Vercel의 Preview 서버 변수 SUPABASE_SECRET_KEY/AUTH_ENABLED/SUPABASE_URL/SUPABASE_PUBLISHABLE_KEY/APP_BASE_URL 설정을 값 노출 없이 확인했다.
+
+- 배포된 API의 11개 실제 검증이 통과했다. 네 폼 생성/읽기/번호 수정/version/삭제, 중복/충돌, 계정 격리, 다른 사용자의 데이터/사진 접근 거부를 확인했다. 공동거주 선택값의 변경 후 저장도 실제 DB 연결로 확인했다.
+- 실제 Edge 브라우저에서 로그인, 네 폼 화면 입력→저장→계정 목록→수정→삭제가 통과했다. 세 방 등록 폼은 각 사진 업로드와 수정 화면의 이미지 실제 디코딩/표시까지 확인했다. 방 알림은 사진 입력 대상이 아니다. 브라우저 JavaScript 오류는 없었다.
+- 합성 계정과 해당 데이터/사진을 삭제했다. DB와 Storage의 잔여 자료를 읽기 조회로 확인했다. 다른 프로젝트와 운영 배포는 변경하지 않았다.
+- 보안 advisor는 서비스 전용 설계의 RLS no policy INFO 11건, 기존 유출 비밀번호 보호 비활성 WARN 1건이었다. 후자는 후속으로 유지한다. 정기 삭제 스케줄·경보/운영자 권한/매칭 제공/개인정보 외부 처리 확인은 이번 검증으로 완료된 것이 아니다.

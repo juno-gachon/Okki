@@ -29,7 +29,7 @@
 ## 신청 저장 구현 상태 (2026-11-08)
 
 - 로컬 구현: 네 폼 → 인증된 UUID → 서버 전용 RPC 저장, 계정 화면의 본인 목록/상세/수정/삭제, 별도 연락처·동의, Idempotency-Key·version, 비공개 사진 예약/재인코딩/업로드.
-- 검증: check/test:ci 21개/build. PostgreSQL 엔진(PGlite)의 트랜잭션·제약·권한 테스트와 mock API/DOM 회귀이며 원격 실연동을 대신하지 않습니다.
+- 검증: check/test:ci 23개/build. PostgreSQL 엔진(PGlite)의 트랜잭션·제약·권한 테스트와 mock API/DOM 회귀이며 원격 실연동을 대신하지 않습니다.
 - 개발 DB 적용 완료: 사용자 승인 후 application_intake와 intake_auth_boundary migration을 적용했습니다. 실제 Auth 쿠키 로그인 → 네 폼 저장/조회/수정/삭제, 멱등 요청·version 충돌, 타인 조회/수정/삭제 및 직접 Data API/RPC/사진 접근 거부를 확인했습니다. 사진은 실제 비공개 Storage 업로드·WebP 변환·서명 URL 열람을 검증했습니다.
 - 실제 검증: scripts/verify-intake-live.mjs의 11개 점검 통과. 합성 계정 두 개와 해당 신청·사진을 삭제했고 잔여 신청/연락처/사진 0건을 조회로 확인했습니다. 재실행은 로컬 앱 서버와 INTAKE_LIVE_VERIFY=develop, VERIFY_APP_URL을 명시해야 합니다. 키·쿠키·번호·계정 식별자는 출력하지 않습니다.
 - 보안 advisor: RLS 정책 없음 INFO 11건은 일반 사용자 직접 접근을 차단하는 의도된 구성입니다. 유출 비밀번호 보호 비활성 WARN 1건은 출시 전 확인 과제로 남았습니다. 개발 Preview 배포와 화면 검증은 아래 최신 기록을 참고합니다.
@@ -159,3 +159,14 @@ PR에서는 CI 검사를 실행하고, 배포는 아래 브랜치의 push에서 
 Vercel Git 자동 배포는 `vercel.json`에서 비활성화하여 Actions와의 중복 배포를 방지합니다. 실행 요약에는 커밋 SHA와 배포 URL이 기록됩니다. 실제 인증·DB·문자 연동은 별도로 구축·검증해야 합니다.
 
 Auth를 Preview에서 사용하려면 Vercel의 **develop 브랜치 Preview 환경**에 위 네 변수를 설정해야 합니다. `APP_BASE_URL`은 develop 고정 Preview 주소를 사용합니다. 다른 임시 배포 URL에서 POST하면 Origin 검증으로 거부되므로 고정 주소로 접속합니다. `NEXT_NO_ROUTES_MANIFEST` 오류가 `src/routes-manifest.json`을 가리키면 이전 출력 설정이 적용된 것입니다. `outputDirectory: ".next"` 수정이 포함된 새 커밋으로 Actions를 실행해야 합니다. 대시보드의 Output Directory override도 해제하면 설정 혼동을 줄일 수 있습니다. production에 개발 DB 값을 복사하지 마세요. 코드도 `VERCEL_ENV=production`에서 위 개발 DB 연결을 차단합니다. 이번 작업에서는 Vercel 환경값·프로젝트 설정을 원격 변경하거나 배포하지 않았습니다.
+
+## 개발 Preview 배포 검증 — 2026-11-09
+
+[개발 Preview](https://github-vercel-okki-develop-tech-for-impact.vercel.app)에 develop 변경사항을 GitHub Actions로 배포했습니다. 구현 커밋 167fde2 이후 실제 브라우저에서 발견한 사진 CSP 문제와 공동거주 수용 여부 누락을 8a77185에서 보완했습니다. CI·배포 workflow 모두 성공했습니다.
+
+- 배포 API 실검증 11항목 통과: 실제 Auth 쿠키, 네 폼 저장/조회/수정/삭제, 멱등/버전 충돌, 타인 접근 차단, 비공개 사진 업로드·권한 검사.
+- 실제 Edge 브라우저에서 로그인과 네 폼 저장/수정/삭제 통과. 중개사·공동거주·퇴거 폼은 사진 업로드 후 수정 화면에서 실제 이미지 표시와 유지도 확인했습니다. 방 알림의 공동거주 선택값 보존도 확인했습니다. 브라우저 JavaScript 오류는 없었습니다.
+- 사진은 미리보기 data URL을 로컬 Blob으로 변환하고, 저장 사진은 본인 인증을 매번 검사하는 같은 사이트의 이미지 프록시로 제공합니다. CSP 완화나 버킷 공개 없이 동작합니다.
+- 테스트 계정·신청·사진을 삭제했습니다. 실제 개인정보·키·우회 인증값은 검증 기록에 포함하지 않습니다. Preview 접근 보호는 유지했습니다.
+
+운영 배포, 정기 파기 스케줄/경보, 운영자 관리·중개사 승인·매칭 수신자 사진 접근은 후속입니다. 유출 비밀번호 보호 비활성 경고도 출시 전 확인 과제로 유지합니다.

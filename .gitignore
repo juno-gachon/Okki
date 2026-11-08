@@ -22,3 +22,6 @@ deployment-url.txt
 .vercel
 .env*
 !.env.example
+
+# Local Supabase CLI cache.
+supabase/.temp/

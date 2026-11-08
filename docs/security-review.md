@@ -180,3 +180,9 @@ advisor: RLS no policy INFO 11건은 서비스 전용 grants 설계에 따른 �
 배포 API 점검은 통과했으나 Edge 실제 화면에서 data URL fetch가 CSP connect-src self에 막혀 사진 제출이 실패함을 확인했다. 외부 스크립트/연결 정책을 넓히지 않고 로컬 atob/Blob 디코딩으로 수정했다. 저장 사진도 img-src self 정책을 지키도록 로그인된 본인 전용 GET 이미지 프록시를 추가했으며 사진 owner/ready·신청 owner/만료·no-store를 검증한다. 서명 URL 반환은 중단한다. CSP 우회·버킷 공개는 하지 않았다. 선택 동의 대상 sharing 누락도 typed 열과 CHECK/갱신 RPC·필드 사전으로 보완했다.
 
 근거: src/intake.js, intake-handler.mjs, media/[id]/route.js, migration intake_sharing_preference. 검증: 로컬 디코딩 무네트워크 회귀, 이미지 프록시 소유권/부모 검사, check/test:ci 23개. 실제 Preview 재배포 후 전체 브라우저/API 확인과 합성 자료 삭제를 마쳐야 완료다. 보호된 Preview는 기존 인증으로 접근하며 접근 보호를 비활성화하지 않는다. 키/우회 인증값은 로그·git에 남기지 않는다.
+
+### 2026-11-09 Preview 재배포 후 완료 근거
+
+8a77185의 Actions CI·배포 성공 후 배포 API 11개 점검 및 실제 Edge 브라우저 전 경로가 통과했다. 방 알림/중개사/공동거주/퇴거의 생성·수정·삭제, 세 등록 폼의 사진 업로드/본인 수정 화면 표시·유지, 공동거주 선택 보존, JavaScript 오류 없음 확인. 비로그인/타인 사진 프록시 401/404와 일반 JWT의 직접 테이블/RPC/Storage 거부도 확인했다. 테스트용 Auth 계정·신청·Storage 객체를 삭제하고 잔여 합성 자료를 조회했다. 실제 키/쿠키/서명·우회 URL은 공개 기록에 남기지 않았다. CSP·버킷 공개 설정은 완화하지 않았다.
+
+advisor 재검토: 서비스 전용 grants에 따른 RLS no policy INFO 11건은 의도된 상태. Auth leaked password protection disabled WARN 1건은 계속 후속이다. 정기 파기 호출과 경보, 운영자 역할, production 및 개인정보 외부 처리 검증은 남아 있다.
