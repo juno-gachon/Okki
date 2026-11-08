@@ -32,7 +32,7 @@
 - 검증: check/test:ci 21개/build. PostgreSQL 엔진(PGlite)의 트랜잭션·제약·권한 테스트와 mock API/DOM 회귀이며 원격 실연동을 대신하지 않습니다.
 - 개발 DB 적용 완료: 사용자 승인 후 application_intake와 intake_auth_boundary migration을 적용했습니다. 실제 Auth 쿠키 로그인 → 네 폼 저장/조회/수정/삭제, 멱등 요청·version 충돌, 타인 조회/수정/삭제 및 직접 Data API/RPC/사진 접근 거부를 확인했습니다. 사진은 실제 비공개 Storage 업로드·WebP 변환·서명 URL 열람을 검증했습니다.
 - 실제 검증: scripts/verify-intake-live.mjs의 11개 점검 통과. 합성 계정 두 개와 해당 신청·사진을 삭제했고 잔여 신청/연락처/사진 0건을 조회로 확인했습니다. 재실행은 로컬 앱 서버와 INTAKE_LIVE_VERIFY=develop, VERIFY_APP_URL을 명시해야 합니다. 키·쿠키·번호·계정 식별자는 출력하지 않습니다.
-- 보안 advisor: RLS 정책 없음 INFO 11건은 일반 사용자 직접 접근을 차단하는 의도된 구성입니다. 유출 비밀번호 보호 비활성 WARN 1건은 출시 전 확인 과제로 남았습니다. GitHub 커밋·웹 배포는 이번 검증에 포함하지 않았습니다.
+- 보안 advisor: RLS 정책 없음 INFO 11건은 일반 사용자 직접 접근을 차단하는 의도된 구성입니다. 유출 비밀번호 보호 비활성 WARN 1건은 출시 전 확인 과제로 남았습니다. 개발 Preview 배포와 화면 검증은 아래 최신 기록을 참고합니다.
 - 보관 정리: CRON_SECRET으로 보호한 POST /api/intake/maintenance를 추가했습니다. 만료 신청과 24시간 지난 미완료 사진을 정리합니다. 정기 호출 스케줄·실패 경보는 아직 연결하지 않았으며 실사용 전 필요합니다.
 - 운영자 UI/권한·매칭 사진 조회·중개사 계정 발급은 후속입니다. 회원 탈퇴·백업 삭제와 외부 위탁/이전 조건의 출시 전 확인도 남아 있습니다.
 

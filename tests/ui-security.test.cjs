@@ -120,6 +120,17 @@ test('four application forms collect unverified phone input without persisting i
 });
 
 
+test('photo previews decode locally without fetching data URLs or relaxing CSP', () => {
+  const dom=browser(), w=dom.window;
+  try {
+    w.fetch=()=>assert.fail('Preview bytes must not require a network request');
+    const blob=w.intakePhotoBlob('data:image/jpeg;base64,AQID');
+    assert.equal(blob.type,'image/jpeg');assert.equal(blob.size,3);
+    assert.throws(()=>w.intakePhotoBlob('https://untrusted.example/photo.jpg'));
+    assert.throws(()=>w.intakePhotoBlob('data:text/html;base64,AQID'));
+  } finally {w.close();}
+});
+
 test('four live intake forms send typed, account-bound submissions without localStorage fallback', async () => {
  const dom=browser(),w=dom.window,context=dom.getInternalVMContext();
  try {

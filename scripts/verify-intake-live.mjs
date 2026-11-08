@@ -70,15 +70,19 @@ try {
     const own=await api(a,'/api/intake?id='+saved.id+'&kind='+kind);assert.equal(own.response.status,200);assert.equal(own.body.application.data.phone,'01000000000');
     if(kind==='broker'){
       assert.equal(own.body.application.photos.length,1);
-      const signed=await fetch(own.body.application.photos[0].url);assert.equal(signed.status,200);await signed.arrayBuffer();
+      const photoUrl=own.body.application.photos[0].url;
+      assert.equal(new URL(photoUrl).origin,base,'same-origin authenticated photo');
+      const image=await fetch(photoUrl,{headers:{cookie:a.cookie}});assert.equal(image.status,200);assert.match(image.headers.get('cache-control'),/no-store/);await image.arrayBuffer();
+      assert.equal((await fetch(photoUrl,{headers:{cookie:b.cookie}})).status,404);
+      assert.equal((await fetch(photoUrl)).status,401);
     }
     const foreign=await api(b,'/api/intake?id='+saved.id+'&kind='+kind);assert.equal(foreign.response.status,404);assert.equal(foreign.body.application,undefined);
-    const edit={...input,id:saved.id,version:1,phone:'010-0000-0002'};
+    const edit={...input,data:kind==='waiting'?{...input.data,sharing:'공동거주 가능'}:input.data,id:saved.id,version:1,phone:'010-0000-0002'};
     const forged=await api(b,'/api/intake',edit,{headers:{'idempotency-key':randomUUID()}});assert.equal(forged.response.status,404,kind+' cross-account update');
     const forbiddenDelete=await api(b,'/api/intake/delete',saved);assert.equal(forbiddenDelete.response.status,404);
     const edited=await api(a,'/api/intake',edit,{headers:{'idempotency-key':randomUUID()}});assert.equal(edited.response.status,201,kind+' edit');assert.equal(edited.body.application.version,2);
     const stale=await api(a,'/api/intake',edit,{headers:{'idempotency-key':randomUUID()}});assert.equal(stale.response.status,409);
-    const updated=await api(a,'/api/intake?id='+saved.id+'&kind='+kind);assert.equal(updated.body.application.data.phone,'01000000002');
+    const updated=await api(a,'/api/intake?id='+saved.id+'&kind='+kind);assert.equal(updated.body.application.data.phone,'01000000002');if(kind==='waiting')assert.equal(updated.body.application.data.sharing,'공동거주 가능');
     const fk=kind==='waiting'?'housing_request_id':'listing_id';
     const contact=good(await admin.from('applicant_contacts').select('phone_e164,verification_status').eq(fk,saved.id).single(),'actual contact persisted');assert.equal(contact.phone_e164,'+821000000002');assert.equal(contact.verification_status,'unverified');
     const consents=good(await admin.from('consents').select('purpose').eq(fk,saved.id),'actual consent persisted');assert.ok(consents.some(x=>x.purpose==='intake'));

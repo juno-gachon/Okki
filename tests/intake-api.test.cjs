@@ -29,3 +29,14 @@ test('own detail is hidden from a different owner before contacts or Storage are
  const response=await handleIntake(req,'application',{config,auth,db:()=>({from:table=>{assert.equal(table,'listings');return query;}})});
  assert.equal(response.status,404);assert.ok(filters.some(([k,v])=>k==='owner_user_id'&&v===actor));
 });
+test('same-origin photo proxy checks ownership and parent before serving private bytes',async()=>{
+ const {handleIntake}=await import('../lib/server/intake-handler.mjs');const id=randomUUID();
+ const req=new Request('https://okki.example/api/intake/media/'+id);req.cookies={getAll:()=>[]};
+ for(const allowed of [false,true]){
+  const filters=[];
+  const db=()=>({from:table=>({select(){return this;},eq(k,v){filters.push([table,k,v]);return this;},gt(){return this;},maybeSingle:async()=>({data:allowed?(table==='listing_media'?{listing_id:id,object_path:'private.webp'}:{id}):null})}),storage:{from:()=>({download:async()=>({data:new Blob([new Uint8Array([1,2,3])]),error:null})})}});
+  const response=await handleIntake(req,'photo:'+id,{config,auth,db});
+  assert.equal(response.status,allowed?200:404);assert.ok(filters.some(([,key,value])=>key==='owner_user_id'&&value===actor));
+  if(allowed){assert.equal(response.headers.get('content-type'),'image/webp');assert.match(response.headers.get('cache-control'),/no-store/);assert.equal((await response.arrayBuffer()).byteLength,3);}
+ }
+});

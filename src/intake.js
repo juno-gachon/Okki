@@ -4,6 +4,13 @@ waitDraft = {}; waitEdit = null;
 let intakeEdit = null;
 const intakeFormKinds = {'wait-form':'waiting','registration-broker':'broker','registration-resident':'resident','vacancy-form':'vacancy'};
 const intakePending = new WeakMap();
+// 로컬 미리보기는 네트워크 요청 없이 디코딩한다. connect-src에 data:를 허용하지 않는다.
+function intakePhotoBlob(value) {
+  const match=/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(value);
+  if(!match || match[2].length>1400000)throw new Error('사진 형식 또는 크기를 확인해주세요.');
+  const bytes=Uint8Array.from(atob(match[2]),char=>char.charCodeAt(0));
+  return new Blob([bytes],{type:match[1]});
+}
 async function intakeRequest(url, options={}) {
   const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options,signal:AbortSignal.timeout(30000)});
   const body=await response.json();
@@ -87,7 +94,7 @@ function intakeFormEvents() {
       if(!pending||pending.snapshot!==snapshot){pending={snapshot,key:crypto.randomUUID(),media:[]};intakePending.set(f,pending);}
       for(let i=pending.media.length;i<photos.length;i++){
         const existing=intakeEdit?.photos.find(x=>x.url===photos[i]);if(existing){pending.media.push(existing.id);continue;}
-        const blob=await (await fetch(photos[i])).blob();
+        const blob=intakePhotoBlob(photos[i]);
         if(blob.size>1048576)throw new Error('사진을 한 장당 1MB 이하로 줄여주세요.');
         const uploaded=await intakeRequest('/api/intake/media',{method:'POST',headers:{'Content-Type':blob.type},body:blob});pending.media.push(uploaded.id);
       }

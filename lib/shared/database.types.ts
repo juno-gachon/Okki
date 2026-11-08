@@ -273,6 +273,7 @@ export type Database = {
           preferences: string | null
           regions: string[] | null
           seeker_id: string
+          sharing: string | null
           situation: string
           start_date: string | null
           status: string
@@ -301,6 +302,7 @@ export type Database = {
           preferences?: string | null
           regions?: string[] | null
           seeker_id: string
+          sharing?: string | null
           situation: string
           start_date?: string | null
           status?: string
@@ -329,6 +331,7 @@ export type Database = {
           preferences?: string | null
           regions?: string[] | null
           seeker_id?: string
+          sharing?: string | null
           situation?: string
           start_date?: string | null
           status?: string

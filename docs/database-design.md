@@ -887,3 +887,11 @@ POST /api/intake는 단일 RPC 저장, GET은 본인 목록 또는 id+kind에 �
 보안 advisor: RLS Enabled No Policy INFO 11건은 테이블 grants를 차단하고 서버 서비스 접근만 허용하는 정책의 의도된 결과다. 유출 비밀번호 보호 비활성 WARN 1건은 기존 Auth 설정으로, 출시 전 플랜/설정을 확인해 처리할 후속 과제다. [공식 조치 안내](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). 심각한 업무 테이블 권한 노출 경고는 발견되지 않았다.
 
 남은 범위: 배포 환경 서버 키 설정/웹 배포, 정기 파기 호출·실패 경보, 운영자 권한·중개사 승인, 매칭 대상 사진 제공, 계정 탈퇴/백업 및 위탁·국외 이전 정책 확인. 전화 인증·SOLAPI·입주 후 거주 현황은 계속 제외한다.
+
+## 16. Preview 배포 보정 — 2026-11-09
+
+사용자 요청으로 develop 커밋 167fde2를 Actions CI/배포 workflow로 Preview에 반영했다. 서버 환경변수 이름 SUPABASE_SECRET_KEY와 Auth 관련 변수의 Preview 설정을 값 노출 없이 확인했다. 배포된 API 실검증 11항목은 통과했으나 실제 브라우저 사진 제출은 CSP connect-src가 data URL fetch를 차단하여 실패했다.
+
+수정: src/intake.js에서 미리보기 data URL을 atob/Blob으로 로컬 변환하고 CSP를 완화하지 않는다. 본인 사진은 새 GET /api/intake/media/[id] 프록시로 제공하며 매 요청 getUser·사진 owner·ready·부모 신청 owner/만료일을 검사한다. 외부 Storage 경로/서명 URL을 브라우저에 반환하지 않으며 응답은 image/webp, private no-store다. 등록자의 본인 사진 경로이고 매칭 수신자 접근은 후속이다. 이전 14~15장의 300초 서명 URL 설명은 이 구현으로 대체한다.
+
+방 알림 화면의 공동거주 수용 여부(sharing)가 입력 사전에 빠진 것도 보완했다. housing_requests.sharing text nullable에 단독 주거만/공동거주 가능/상담 후 결정 CHECK를 추가하고 저장 RPC의 수정 경로에도 반영했다. 선택 동의 시만 저장한다. migration 20261108152907_intake_sharing_preference는 개발 프로젝트에 적용 완료, 서버/UI 필드 사전·생성 타입·검증기와 동기화했다. check/test:ci 23개 통과, 최종 재배포 후 브라우저·API 재검증을 진행한다. 기존 테스트의 RLS/소유권 정책은 유지한다.

@@ -174,3 +174,9 @@ DOMPurify는 HTML을 DOM으로 파싱한 뒤 허용된 태그·속성·네임스
 실제 검증 스크립트 11개 점검 통과: 두 Auth 쿠키 세션, 네 폼 저장/조회/수정/삭제, 멱등/버전, 타인 접근 404와 비로그인 401, 실제 Storage 업로드/정제/서명 URL, anon/일반 JWT의 테이블/RPC/비공개 사진 직접 접근 거부. 테스트 계정/신청/사진은 삭제했고 잔여 업무 행과 파일 0건을 실제 조회했다. 기존 계정·다른 프로젝트는 변경하지 않았다.
 
 advisor: RLS no policy INFO 11건은 서비스 전용 grants 설계에 따른 의도된 차단. leaked password protection disabled WARN 1건은 미해결이며 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection 에 따라 플랜/설정 확인 후 처리한다. 코드·타입·migration·DB 문서에 근거를 남겼다. 정기 파기/경보·탈퇴/백업/위탁·이전·운영자 권한과 배포 환경 검증은 후속으로 유지하며 출시 완료를 주장하지 않는다.
+
+## 2026-11-09 배포 CSP와 사진 보정
+
+배포 API 점검은 통과했으나 Edge 실제 화면에서 data URL fetch가 CSP connect-src self에 막혀 사진 제출이 실패함을 확인했다. 외부 스크립트/연결 정책을 넓히지 않고 로컬 atob/Blob 디코딩으로 수정했다. 저장 사진도 img-src self 정책을 지키도록 로그인된 본인 전용 GET 이미지 프록시를 추가했으며 사진 owner/ready·신청 owner/만료·no-store를 검증한다. 서명 URL 반환은 중단한다. CSP 우회·버킷 공개는 하지 않았다. 선택 동의 대상 sharing 누락도 typed 열과 CHECK/갱신 RPC·필드 사전으로 보완했다.
+
+근거: src/intake.js, intake-handler.mjs, media/[id]/route.js, migration intake_sharing_preference. 검증: 로컬 디코딩 무네트워크 회귀, 이미지 프록시 소유권/부모 검사, check/test:ci 23개. 실제 Preview 재배포 후 전체 브라우저/API 확인과 합성 자료 삭제를 마쳐야 완료다. 보호된 Preview는 기존 인증으로 접근하며 접근 보호를 비활성화하지 않는다. 키/우회 인증값은 로그·git에 남기지 않는다.
