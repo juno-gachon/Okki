@@ -253,3 +253,5 @@ fd1368f 개발 CI/배포 모두 success. 기존 합성 두 계정으로 실제 �
 적용: lib/server/admin-handler.mjs 전체 매칭 조회도 requireAdmin을 먼저 수행하고 제한 필드/50건/no-store를 유지. 상세 병렬 읽기는 조회 감사 성공 후에만 시작한다. src/admin.js는 textContent 출력, 영속 캐시 없이 로딩/오래된 응답 무시. tests/admin-api.test.cjs와 admin-matches-ui.test.cjs로 비활성 역할 거부·허용 필드·페이지 크기·늦은 응답 회귀 검증. 원격 실사용자 브라우저와 지연 수치는 외부 미검증.
 
 외부 검증 갱신: 756bd26 개발 배포 성공 후 실제 HTTP로 관리자 매칭/신청 목록200, 일반 사용자403, 비로그인401 확인. 합성 계정의 임시 운영자 권한 회수 완료. 로컬32개 테스트·check·build 통과. 실제 브라우저 및 지연 개선율은 미측정.
+
+2026-11-09 매칭 조건 API: admin-handler의 기존 서버 역할 검증 이후 안내ID를 검증하고 연결된 조건의 허용 필드만 반환. admin.js는 textContent로 표시. 전화/메모 미반환, no-store 유지. 과거 snapshot 부재를 화면 명시. 원격 화면 검증은 별도.
