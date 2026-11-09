@@ -106,8 +106,8 @@ function accountPage() {
   if (authState.status === 'loading') content = '<p role="status">로그인 상태를 확인하고 있어요.</p>';
   else if (authState.status === 'error') content = '<p>로그인 상태를 확인하지 못했습니다.</p><button class="btn" id="auth-retry">다시 확인</button>';
   else if (!authState.user) content = '<p>로그인 후 계정 정보를 확인할 수 있어요.</p><a class="btn" href="#/login">로그인</a>';
-  else content = `<p><b>이메일</b><br>${esc(authState.user.email)}</p><p class="micro">가입한 계정으로 로그인되어 있습니다.<br>네 신청 폼에서 제출한 정보는 계정에 연결해 저장합니다.</p><section><h2>내 방 알림</h2><p class="micro">예산·지역·유형·입주일 기준 안내입니다. 추가 생활 조건은 상세에서 확인해주세요.</p><div id="live-inbox"></div></section><section><h2>저장한 신청</h2><div id="intake-records" role="status">불러오는 중입니다.</div></section><div id="account-admin-access"></div><button class="btn secondary" id="auth-logout">로그아웃</button>`;
-  return `<div class="container auth-account"><section class="auth-card"><span class="section-kicker">MY ACCOUNT</span><h1>내 계정</h1>${content}<p id="auth-feedback" role="status" aria-live="polite"></p></section></div>`;
+  else content = `<div class="account-profile"><div><span class="account-label">로그인 계정</span><p class="account-email">${esc(authState.user.email)}</p></div><button class="btn secondary account-logout" id="auth-logout">로그아웃</button></div><div class="account-sections"><section class="account-section" aria-labelledby="account-records-title"><div class="account-section-head"><h2 id="account-records-title">저장한 신청</h2><p>계정에 연결된 신청을 확인하고 관리해요.</p></div><div id="intake-records" class="account-content" role="status">불러오는 중입니다.</div></section></div><div id="account-admin-access"></div>`;
+  return `<div class="container auth-account"><header class="account-heading"><span class="section-kicker">MY ACCOUNT</span><h1>내 계정</h1><p>계정 정보와 신청 내역을 확인해요.</p></header>${content}<p id="auth-feedback" class="auth-feedback" role="status" aria-live="polite"></p></div>`;
 }
 
 // 버튼은 편의용 진입점이다. 실제 페이지/API 권한은 서버가 매 요청 검사한다.
@@ -134,7 +134,6 @@ async function accountAdminAccess() {
 
 function accountEvents() {
   accountAdminAccess();
-  if (typeof loadLiveInbox === "function") loadLiveInbox();
   const retry = $('#auth-retry');
   if (retry) retry.onclick = () => authLoadSession();
   const logout = $('#auth-logout');
