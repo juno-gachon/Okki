@@ -956,3 +956,13 @@ GET /api/inbox: 검증된 UUID의 미만료 housing_request만 조회, 수신자
 ### 2026-11-09 승인 후 보완 적용
 
 scope_web_matching은 기존 save_intake 정의를 보존하고 매칭 호출 한 곳만 refresh_web_matches_for(p_actor)로 교체하는 짧은 migration으로 개발 DB 적용 성공. 전체 refresh EXECUTE는 service_role에서도 회수했다. 기존 두 합성 계정의 신청 조합에 실제 웹 알림1건 생성, 재실행 추가0건 확인. 기존 기록의 보완 미적용 상태를 대체한다. 테스트 계정 참조 파일은 빌드로 삭제되는 .next 대신 Git 제외 .vercel/matching-test-records.json으로 이동했다. 실제 식별자는 공개 문서 제외. 웹 delivered는 알림함 저장이며 아직 읽음·문자 발송을 의미하지 않는다.
+
+### 2026-11-09 개발 배포·기존 두 계정 실검증 완료
+
+fd1368f 개발 배포: CI 42540046818 success, Deploy Vercel 42540046870 success. scripts/verify-web-matches-live.mjs로 기존 합성 방 구하기/중개사 계정의 실제 Auth 쿠키와 Vercel CLI 인증을 사용해 개발 고정 주소에서 검증했다. 수신자 inbox에 해당 매물 알림1건, 상세 월세40/관리비5와 주소·전화 제외, 다른 계정 상세404, 비로그인401, 관리자 상세의 동일 알림ID 확인 통과. 웹 DB 저장이며 SMS/브라우저 push/읽음/계약 검증이 아니다. 별도 이메일 발송 없이 합성 계정용 Auth 링크를 메모리에서 교환했으며 토큰/쿠키/이메일/UUID를 문서에 남기지 않았다.
+
+임시 관리자 검증을 위해 합성 중개사 계정에 부여한 역할은 검증 후 active=false로 회수, 활성 잔여0 확인. 두 원래 합성 신청과 웹알림1건은 운영자 확인용 유지. 지정 실사용 운영자의 권한은 변경하지 않았다. 원격 사진/문의 연결은 이번 기능에 포함되지 않는다. 자유문구·정량화되지 않은 기간/생활조건은 기본 수치 매칭의 충족 보장 대상이 아님을 수신자 화면에 표시한다.
+
+### 2026-11-09 알림 상세 사진 프록시
+
+GET /api/inbox?id=안내ID 상세의 photos는 ready 사진 최대5개의 같은 출처 프록시 URL만 반환한다. GET /api/inbox?id=안내ID&photo=사진ID는 매번 getUser·신청 소유·현재 유효한 매칭·사진 매물 연결·ready를 검증하고 Storage WebP 바이트를 private no-store로 반환한다. 원본 경로/서명 URL/등록자 연락처는 내보내지 않는다. src/intake.js에서 사진 없음·이미지 오류 상태를 표시한다. 테이블/Storage 정책 변경 없음. 사용자별 사진 접근 및 실제 브라우저 검증은 별도 결과로 기록한다.
