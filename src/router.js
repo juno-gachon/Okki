@@ -220,6 +220,12 @@ function render(scroll = true) {
   if (typeof mapEvents === "function" && ["place", "area"].includes(route)) mapEvents();
   if (route === "provide" && id === "vacancy") $("#vacancy-form")?._vacancySync?.();
   if (typeof intakeFormEvents === "function") intakeFormEvents();
+  if (route === 'notifications' && typeof loadLiveInbox === 'function') {
+    const section=document.createElement('section');section.className='container';
+    const heading=document.createElement('h2');heading.textContent='내 방 알림';
+    const inbox=document.createElement('div');inbox.id='live-inbox';section.append(heading,inbox);
+    document.getElementById('main').prepend(section);loadLiveInbox();
+  }
   if (route === "account" && typeof intakeAccountRecords === "function") intakeAccountRecords();
   if (typeof updateAuthNavigation === "function") updateAuthNavigation();
 }

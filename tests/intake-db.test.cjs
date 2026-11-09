@@ -29,6 +29,15 @@ test('Postgres intake transaction: all four kinds, ownership, idempotency, versi
       await assert.rejects(db.query(sql,[other,kind,randomUUID(),'other',first.id,2,JSON.stringify(row),'+821000000000',false,[]]),/NOT_FOUND/);
       if(kind==='waiting')await assert.rejects(db.query(sql,[actor,kind,randomUUID(),'duplicate',null,null,JSON.stringify(row),'+821000000000',false,[]]),/VERSION_CONFLICT/);
     }
+    await db.query("update public.housing_requests set types=array['원룸'],budget=50,deposit=300,any_region=true,date='2026-11-12',latest_date=null where owner_user_id=$1",[actor]);
+    await db.query("update public.broker_listing_details set type='원룸',deposit=300,rent=40,fee=5,date='2026-11-12'");
+    await db.query("update public.listings set owner_user_id=$1 where kind='broker'",[other]);
+    assert.equal((await db.query('select public.refresh_web_matches_for($1) n',[actor])).rows[0].n,1);
+    assert.equal((await db.query('select public.refresh_web_matches_for($1) n',[actor])).rows[0].n,0);
+    assert.equal((await db.query('select count(*)::int n from public.match_deliveries')).rows[0].n,1);
+    await db.query('update public.broker_listing_details set fee=null');
+    assert.equal((await db.query('select count(*)::int n from public.eligible_broker_pairs')).rows[0].n,0);
+    await assert.rejects(db.query('select public.refresh_web_matches()'),/permission denied/);
     const bad=JSON.stringify({...rows.broker,min:-1});
     const before=(await db.query('select count(*)::int n from public.listings')).rows[0].n;
     await assert.rejects(db.query('select public.save_intake($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',[actor,'broker',randomUUID(),'rollback',null,null,bad,'+821000000000',true,[]]));
