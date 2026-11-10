@@ -1,5 +1,30 @@
 # 옥키 DB·통신·접근 권한 상세설계
 
+완료 검증 (2026-11-10 KST): develop 프로젝트에 migration 적용 및 실제 수동 수집 완료. 20260101~20261110 API 1,374건에서 후보 132건을 대조하여 옥천 공고 2건/공급 5건 저장, 조회 실패 0건. 두 공고 모두 접수 마감. SQL로 옥천 주소·행 수·일반 역할 grants 차단 확인. 로컬 HTTP 목록/상세 200과 실제 브라우저 상세의 옥천삼양 공급 2행·원문 안내 표시 확인. npm run check, npm run test:ci(37/37), npm run build, git diff --check 통과. 보안 advisor의 기존 유출 비밀번호 보호 비활성 WARN은 후속 유지. production DB 변경·배포·예약 수집·실제 알림 발송 없음. 단지 주소 없는 사업 및 모든 과거 공고의 포괄 수집은 미검증.
+
+## 2026-11-10 최신 추가 — 옥천 공공임대 수동 수집·공개 조회 (D02/D08)
+
+사용자 확정: 행복주택·국민임대 등 옥천 공공임대 공고/공급을 DB 저장·화면 제공한다. 하루 1회 자동 조회는 구현하지 않고 README 후속 과제로 남긴다. 기존 공고 저장 보류 규정 중 이 범위만 대체한다. SMS/알림 발송은 여전히 보류한다.
+
+Migration `20261110061456_public_housing_catalog.sql`은 아래 두 테이블과 `sync_public_housing(jsonb,timestamptz)`를 추가한다. 개발 DB 대상이며 production/배포와 구분한다.
+
+| 테이블 | 필드·제약 |
+| --- | --- |
+| public_housing_notices | UUID id PK/default 난수; source='lh', external_id(40), system_code(10) 조합 UNIQUE. title(500), housing_category(100), source_status(100), 공식 HTTPS source_url 필수. posted_on/closes_on date nullable. schedules/notes/documents JSON 배열 default 빈 배열(옥천 일정·공통 안내·첨부명). content_hash SHA256 hex 필수. version 양수 default1, created_at/updated_at now(), checked_at 필수 timestamptz. posted_on desc/id 인덱스 |
+| public_housing_supplies | UUID id PK/default 난수, notice_id FK CASCADE, ordinal>=0와 notice_id UNIQUE(FK 조회 인덱스 겸용). complex_name(300), address(500) 필수: CHECK 충청북도 옥천군. housing_type/exclusive_area/supply_area/household_count/recruitment_count/deposit_text/rent_text 각각 varchar(300) nullable |
+
+가격은 API 원 단위 문자열을 보존하며 정수 만원 필드로 변환하지 않는다. 미확인/공고문 참조/0원을 구분한다. 모집 수는 예비입주자 포함 가능, 빈집 수와 다르다. 외부 HTML·원문 응답 전체·키·신청자 정보를 저장하지 않는다. 공개 단지 주소는 민간 개인의 상세 주소 수집과 별개다.
+
+권한: 두 테이블 RLS 활성, PUBLIC/anon/authenticated 직접 grants 없음. service_role만 CRUD와 RPC 실행. SECURITY INVOKER·고정 search_path·transaction advisory lock·입력 개수 제한·공고+공급 단일 transaction. 같은 hash는 checked_at만 갱신, 변경 시 version 증가. 이전 수집시각은 덮어쓰기 차단. 현재 삭제/만료 자동화 없음. 과거 전문 revision 및 보관 정책은 후속.
+
+공개 읽기 예외: GET /api/public-housing[?id=UUID]는 로그인 없이 검증된 공개 LH 자료만 고정 테이블/허용 필드로 반환한다. 기존 신청·매물·연락처의 인증 규정은 유지한다. 브라우저 직접 DB 조회 차단, 서비스 키는 서버 전용. HTTP 쓰기 API·Cron 없음. 지역 CHECK와 공식 링크 검증을 함께 적용한다.
+
+수집: list 06/13, PAN_ST_DT/PAN_ED_DT 반환조건 검증, 전체 페이지/건수/중복 확인. 충북·전국·지역 미상·옥천/충북 제목 후보의 공식 상세 소재지와 공급 단지명을 대조해 옥천 공급행만 저장한다. 지역 불명 사업은 미반영. 상세 실패는 기존 행을 유지하고 비정상 종료코드로 알린다. 누락을 삭제·취소로 해석하지 않는다. 초기 수집 범위는 2026년이며 전체 과거 이력은 미수집.
+
+화면: 원문 접수마감/취소 우선, 확인된 단지 일정이 미래면 신청 전, 원문 접수중 또는 확인 기간 내부는 신청 중. 날짜만 제공된 경계일은 접수 시간 확인, 일정 불명은 접수 일정 확인. 다른 지역 단지의 기본 일정을 복사하지 않는다. 원문 상태·마지막 확인시각과 24시간 경과 안내, 가격/관리비 미확인·자격 원문 확인·첨부명·원문 안내 표시. 공고마감일을 대상별 종료시각으로 간주하지 않는다.
+
+검증: tests/public-housing-live.test.cjs의 상태/KST·오류/페이지·지역/일정·rollback/중복/오래된 import·DB 직접 접근 차단·DOM 악성문구/필터/실패 검증. 실제 저장·조회 결과는 작업 완료 기록에 별도 기재한다. 공개 문서는 구조와 공개 출처만 포함한다.
+
 기준일: 2026-11-08 KST. 문서 상태: **개발 DB 접수 범위 적용·실연동 검증 완료, 운영 배포 미실시**.
 
 이 문서는 방 알림 신청, 중개사 매물, 퇴거 예정, 공동거주 모집의 저장·조회·사진·매칭 연결 기준이다. 사용자 결정과 구현 제안을 구분한다. 실제 schema의 증거는 migration과 대상 환경의 검증 결과다. 이 문서 작성만으로 테이블·RPC·Storage·권한이 생성된 것은 아니다.

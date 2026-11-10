@@ -145,6 +145,10 @@ function renderLifeRoute(route, id, sub, scroll) {
 
 /* 공공주택 경로는 목록·공고·구독·관리 화면과 관련 이벤트를 같은 구간에 둡니다. */
 function renderPublicRoute(route, page, id, group, edit, last, scroll) {
+  if(route === 'public' && typeof renderLivePublicHousing === 'function') {
+    renderLivePublicHousing(page,id,scroll);
+    return true;
+  }
   if (typeof phHome !== "function") return false;
   let fn = null;
   if (route === "public") {

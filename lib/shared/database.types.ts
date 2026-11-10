@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_memberships: {
+        Row: {
+          active: boolean
+          role: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          role: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_records: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          housing_request_id: string | null
+          id: string
+          listing_id: string | null
+          note: string
+          result: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          housing_request_id?: string | null
+          id?: string
+          listing_id?: string | null
+          note?: string
+          result: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          housing_request_id?: string | null
+          id?: string
+          listing_id?: string | null
+          note?: string
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_records_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["housing_request_id"]
+          },
+          {
+            foreignKeyName: "admin_records_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: false
+            referencedRelation: "housing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_records_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "admin_records_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applicant_contacts: {
         Row: {
           collection_consent_id: string
@@ -54,8 +134,22 @@ export type Database = {
             foreignKeyName: "applicant_contacts_housing_request_id_fkey"
             columns: ["housing_request_id"]
             isOneToOne: true
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["housing_request_id"]
+          },
+          {
+            foreignKeyName: "applicant_contacts_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: true
             referencedRelation: "housing_requests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applicant_contacts_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
           },
           {
             foreignKeyName: "applicant_contacts_listing_id_fkey"
@@ -198,6 +292,13 @@ export type Database = {
             foreignKeyName: "broker_listing_details_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: true
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "broker_listing_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
@@ -242,8 +343,22 @@ export type Database = {
             foreignKeyName: "consents_housing_request_id_fkey"
             columns: ["housing_request_id"]
             isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["housing_request_id"]
+          },
+          {
+            foreignKeyName: "consents_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: false
             referencedRelation: "housing_requests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consents_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
           },
           {
             foreignKeyName: "consents_listing_id_fkey"
@@ -415,6 +530,13 @@ export type Database = {
             foreignKeyName: "listing_media_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "listing_media_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
@@ -467,6 +589,68 @@ export type Database = {
           },
         ]
       }
+      match_deliveries: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          housing_request_id: string
+          id: string
+          listing_id: string
+          read_at: string | null
+          status: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          housing_request_id: string
+          id?: string
+          listing_id: string
+          read_at?: string | null
+          status: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          housing_request_id?: string
+          id?: string
+          listing_id?: string
+          read_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_deliveries_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["housing_request_id"]
+          },
+          {
+            foreignKeyName: "match_deliveries_housing_request_id_fkey"
+            columns: ["housing_request_id"]
+            isOneToOne: false
+            referencedRelation: "housing_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_deliveries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "match_deliveries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       providers: {
         Row: {
           account_status: string
@@ -496,6 +680,122 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      public_housing_notices: {
+        Row: {
+          checked_at: string
+          closes_on: string | null
+          content_hash: string
+          created_at: string
+          documents: Json
+          external_id: string
+          housing_category: string
+          id: string
+          notes: Json
+          posted_on: string | null
+          schedules: Json
+          source: string
+          source_status: string
+          source_url: string
+          system_code: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          checked_at: string
+          closes_on?: string | null
+          content_hash: string
+          created_at?: string
+          documents?: Json
+          external_id: string
+          housing_category: string
+          id?: string
+          notes?: Json
+          posted_on?: string | null
+          schedules?: Json
+          source?: string
+          source_status: string
+          source_url: string
+          system_code: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          checked_at?: string
+          closes_on?: string | null
+          content_hash?: string
+          created_at?: string
+          documents?: Json
+          external_id?: string
+          housing_category?: string
+          id?: string
+          notes?: Json
+          posted_on?: string | null
+          schedules?: Json
+          source?: string
+          source_status?: string
+          source_url?: string
+          system_code?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      public_housing_supplies: {
+        Row: {
+          address: string
+          complex_name: string
+          deposit_text: string | null
+          exclusive_area: string | null
+          household_count: string | null
+          housing_type: string | null
+          id: string
+          notice_id: string
+          ordinal: number
+          recruitment_count: string | null
+          rent_text: string | null
+          supply_area: string | null
+        }
+        Insert: {
+          address: string
+          complex_name: string
+          deposit_text?: string | null
+          exclusive_area?: string | null
+          household_count?: string | null
+          housing_type?: string | null
+          id?: string
+          notice_id: string
+          ordinal: number
+          recruitment_count?: string | null
+          rent_text?: string | null
+          supply_area?: string | null
+        }
+        Update: {
+          address?: string
+          complex_name?: string
+          deposit_text?: string | null
+          exclusive_area?: string | null
+          household_count?: string | null
+          housing_type?: string | null
+          id?: string
+          notice_id?: string
+          ordinal?: number
+          recruitment_count?: string | null
+          rent_text?: string | null
+          supply_area?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_housing_supplies_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "public_housing_notices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seekers: {
         Row: {
@@ -614,6 +914,13 @@ export type Database = {
             foreignKeyName: "shared_housing_details_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: true
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "shared_housing_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
@@ -697,6 +1004,13 @@ export type Database = {
             foreignKeyName: "vacancy_report_details_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: true
+            referencedRelation: "eligible_broker_pairs"
+            referencedColumns: ["listing_id"]
+          },
+          {
+            foreignKeyName: "vacancy_report_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
             referencedRelation: "listings"
             referencedColumns: ["id"]
           },
@@ -704,7 +1018,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      eligible_broker_pairs: {
+        Row: {
+          housing_request_id: string | null
+          listing_id: string | null
+          recipient_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_intake: {
@@ -716,6 +1037,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_admin_action: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_id: string
+          p_kind: string
+          p_note: string
+          p_result: string
+          p_version: number
+        }
+        Returns: undefined
+      }
+      refresh_web_matches: { Args: never; Returns: number }
+      refresh_web_matches_for: { Args: { p_actor: string }; Returns: number }
       reserve_intake_media: {
         Args: { p_actor: string; p_id: string; p_path: string }
         Returns: undefined
@@ -734,6 +1069,10 @@ export type Database = {
           p_version: number
         }
         Returns: Json
+      }
+      sync_public_housing: {
+        Args: { p_checked_at: string; p_notices: Json }
+        Returns: number
       }
     }
     Enums: {

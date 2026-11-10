@@ -3227,3 +3227,9 @@ progress::-webkit-progress-value {
   .auth-card { padding: 24px 20px; }
   .auth-card h2 { font-size: 23px; }
 }
+/* Public catalog tables remain keyboard-scrollable on mobile. */
+.ph-live-table { overflow-x: auto; margin: 1rem 0; }
+.ph-live-table table { width: 100%; border-collapse: collapse; min-width: 650px; }
+.ph-live-table th, .ph-live-table td { padding: .65rem; border-bottom: 1px solid #ddd; text-align: left; }
+.ph-live-table caption { text-align: left; font-weight: 600; }
+.ph-live-note { white-space: pre-wrap; overflow-wrap: anywhere; }
