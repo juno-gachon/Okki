@@ -1,5 +1,20 @@
 # 옥키 DB·통신·접근 권한 상세설계
 
+## 2026-11-10 대상 프로젝트 구조 복제 진행 (D02/D08)
+
+### 후속 완료 검증 — 2026-11-10 KST
+
+- Tech for Impact 26-2에 남은 automatic_web_matches, scope_web_matching, public_housing_catalog 적용 성공. 원격 migration 총 7개 확인. DB 구조 복제 완료, 대시보드 전체 설정 복제 완료와는 구분한다.
+- 두 DB의 catalog를 직접 비교: 컬럼 220개, 제약 184개, 인덱스 41개, public 함수 7개(본문·ACL 포함), 테이블 16개 및 security_invoker 뷰 1개(ACL·RLS 포함), default privileges 24개, 확장 5개와 Storage 버킷 설정 모두 동일. 정책은 두 DB 모두 없음. 비공개 listing-photos 버킷은 WebP/1MiB 제한 일치.
+- 실제 count: 대상 public 16개 테이블, auth.users, auth.sessions, storage.objects 모두 0행. bucket 구성 및 migration 이력만 생성하고 업무 데이터·계정·파일은 복사하지 않음.
+- 권한 검사: anon/authenticated 접근 가능한 public relation 및 실행 함수 각각 0개. 각 역할로 seekers SELECT 시 42501 거부 확인. service_role에서 합성 UUID로 refresh_web_matches_for 호출 결과 0, transaction rollback 완료. service_role의 의도된 RLS 우회와 서버 인증·소유권 검사의 필요성은 유지.
+- security advisor: ERROR/WARN 없음, 정책 없음 INFO 16건. 직접 grants 차단 및 실제 역할 거부 확인으로 현재 서버 전용 접근 설계와 일치. HTTP 인증 사용자 E2E는 계정을 생성하지 않아 미실행.
+- 외부 미검증: Auth 이메일 확인·리다이렉트·SMTP·Data API 대시보드 설정. 플러그인에 해당 조회 기능 없음, 브라우저 앱 접근 승인 시간 만료로 검증 불가. 해당 설정까지 복제 완료로 보고하지 않음. 프로젝트별 키·리전은 별개이며 앱 환경 연결·배포 없음. migration 버전 차이의 후속 이력 정리는 유지.
+
+- 사용자 요청으로 Tech for Impact 26-2에 데이터 없이 구조 복제 진행. application_intake, intake_auth_boundary, intake_sharing_preference, admin_operations 네 migration 적용. 원격 migration 버전은 도구가 별도 생성하므로 로컬 및 개발 DB 이력과 다르다. 향후 CLI 동기화 전에 이력 조정 필요.
+- 검증: public 테이블 14개 생성, 모두 RLS 활성 및 행 0개. 보안 advisor의 14개 정책 없음 INFO는 서버 전용 직접 접근 차단 설계와 함께 검토 필요. 실제 일반 역할 접근 검증은 미완료.
+- 자동 웹 매칭, 범위 제한, 공공임대 세 migration은 도구 확인 만료로 미적용. 원본과 구조 동등성, 비공개 버킷 설정, Auth 설정과 기타 프로젝트 설정 비교 및 검증 미완료. 대상은 프랑크푸르트 리전이며 실제 개인정보 사용 전 D09 검토 필요. 데이터·계정 복사 및 배포 없음.
+
 완료 검증 (2026-11-10 KST): develop 프로젝트에 migration 적용 및 실제 수동 수집 완료. 20260101~20261110 API 1,374건에서 후보 132건을 대조하여 옥천 공고 2건/공급 5건 저장, 조회 실패 0건. 두 공고 모두 접수 마감. SQL로 옥천 주소·행 수·일반 역할 grants 차단 확인. 로컬 HTTP 목록/상세 200과 실제 브라우저 상세의 옥천삼양 공급 2행·원문 안내 표시 확인. npm run check, npm run test:ci(37/37), npm run build, git diff --check 통과. 보안 advisor의 기존 유출 비밀번호 보호 비활성 WARN은 후속 유지. production DB 변경·배포·예약 수집·실제 알림 발송 없음. 단지 주소 없는 사업 및 모든 과거 공고의 포괄 수집은 미검증.
 
 ## 2026-11-10 최신 추가 — 옥천 공공임대 수동 수집·공개 조회 (D02/D08)

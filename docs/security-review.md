@@ -273,3 +273,15 @@ fd1368f 개발 CI/배포 모두 success. 기존 합성 두 계정으로 실제 �
 ### 2026-11-10 옥천 임대공고 지역 실증
 
 scripts/lh-region-probe.mjs는 고정 공공데이터 호스트에 읽기 전용 요청을 보내고 인증키와 요청 URL은 출력하지 않는다. 2026년 1월 1일~11월 10일 요청에서 PAN_ST_DT/PAN_ED_DT가 응답 검색조건에 반영됨을 확인했다. 충북남부권 공고의 공급 단지에 옥천삼양이 포함되어 제목만으로 지역을 판정할 수 없음이 실증됐다. 단지명 누락·전국 통합·오류·기간 의미와 페이지 일관성은 여전히 검토 필요. 이 스크립트는 운영 수집기, 권한 있는 공개 데이터 API 또는 DB 저장 구현이 아니다.
+# 2026-11-10 대상 프로젝트 구조 복제 진행
+
+## 후속 검증 — DB 구조 복제 완료 / 대시보드 설정 외부 미검증
+
+- 근거: 원본/대상 pg_catalog, information_schema, storage.buckets 비교 및 대상 실제 count SQL. public 컬럼 220개·제약 184개·인덱스 41개·함수 7개·relation 17개·default privileges 24개·확장 5개·비공개 버킷 설정 일치. 함수 본문·ACL·RLS·view security_invoker 비교 포함.
+- 모든 업무 테이블 16개 및 Auth 사용자/세션·Storage 파일 각각 0행. 계정·권한 멤버십 데이터·파일 복사 없음.
+- anon/authenticated public relation 및 함수 권한 0개, 실제 SET LOCAL ROLE 후 SELECT는 양쪽 모두 42501 거부. service_role 매칭 함수는 합성 UUID로 0 반환 후 rollback. 실제 HTTP 로그인/소유권 E2E 미실행.
+- security advisor ERROR/WARN 없음. 정책 없음 INFO 16건은 grants 차단 설계와 일치. 보호 대상은 업무 개인정보이며 서비스 키 우회 권한에 대한 서버 인증·소유권 검사는 계속 필요.
+- Auth·SMTP·redirect·Data API 설정은 플러그인 미지원/브라우저 앱 접근 승인 만료로 외부 미검증. 완료 기준은 대시보드에서 원본/대상 설정을 비교하고 승인된 차이를 적용·검증하는 것. 키·리전 복제 및 앱 배포 없음.
+
+- 근거: supabase/migrations 및 대상 Supabase security advisor. 네 migration 적용 후 public 테이블 14개 RLS 활성, 각 0행. 정책 없음 INFO 14건은 서버 전용 접근 설계와 함께 검토 필요.
+- 미완료: 세 migration 적용, 일반 역할 직접 접근 차단 실측, 함수·권한·Storage·Auth 설정 및 원본과의 차이 확인. 확인 완료 전 운영 사용 금지. 대상은 프랑크푸르트 리전으로 D09 개인정보 처리 지역 확인 필요. 사용자 데이터와 계정 복사 없음.
